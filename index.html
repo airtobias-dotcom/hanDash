@@ -115,6 +115,7 @@
     .card-watch::before   { background: radial-gradient(circle at 50% 0%, rgba(249,115,22,.08), transparent 70%); }
     .card-price::before   { background: radial-gradient(circle at 50% 0%, rgba(20,184,166,.08), transparent 70%); }
     .card-clean::before   { background: radial-gradient(circle at 50% 0%, rgba(99,102,241,.08), transparent 70%); }
+    .card-rechnung::before  { background: radial-gradient(circle at 50% 0%, rgba(239,68,68,.08), transparent 70%); }
 
     .icon-wrap {
       width: 56px;
@@ -133,6 +134,7 @@
     .icon-watch  { background: rgba(249,115,22,.15); color: #fb923c; }
     .icon-price  { background: rgba(20,184,166,.15); color: #2dd4bf; }
     .icon-clean  { background: rgba(99,102,241,.15); color: #818cf8; }
+    .icon-rechnung { background: rgba(239,68,68,.15);  color: #f87171; }
 
     .card-body { display: flex; flex-direction: column; gap: 6px; flex: 1; }
 
@@ -203,6 +205,7 @@
     .ill-watch { background: linear-gradient(135deg, rgba(249,115,22,.12), rgba(245,158,11,.06)); }
     .ill-price { background: linear-gradient(135deg, rgba(20,184,166,.12), rgba(6,182,212,.06)); }
     .ill-clean { background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(79,70,229,.06)); }
+    .ill-rechnung{ background: linear-gradient(135deg, rgba(239,68,68,.12), rgba(220,38,38,.06)); }
 
     .ill-svg { opacity: 0.6; }
 
@@ -464,6 +467,46 @@
     </div>
   </a>
 
+
+  <!-- hanRechnungs-Downloader -->
+  <a class="card card-rechnung" href="https://192.168.178.62/" target="_blank" rel="noopener">
+    <div class="illustration ill-rechnung">
+      <svg class="ill-svg" viewBox="0 0 200 90" fill="none" xmlns="http://www.w3.org/2000/svg" width="200">
+        <rect x="35" y="10" width="50" height="64" rx="6" fill="rgba(239,68,68,.06)" stroke="rgba(239,68,68,.18)" stroke-width="1.5"/>
+        <rect x="30" y="15" width="50" height="64" rx="6" fill="rgba(239,68,68,.08)" stroke="rgba(239,68,68,.22)" stroke-width="1.5"/>
+        <rect x="25" y="20" width="50" height="64" rx="6" fill="rgba(239,68,68,.12)" stroke="rgba(239,68,68,.3)" stroke-width="1.5"/>
+        <rect x="33" y="32" width="34" height="5" rx="2.5" fill="rgba(239,68,68,.5)"/>
+        <rect x="33" y="43" width="24" height="4" rx="2" fill="rgba(239,68,68,.3)"/>
+        <rect x="33" y="53" width="30" height="4" rx="2" fill="rgba(239,68,68,.3)"/>
+        <rect x="33" y="63" width="18" height="4" rx="2" fill="rgba(239,68,68,.25)"/>
+        <circle cx="152" cy="45" r="24" fill="rgba(239,68,68,.08)" stroke="rgba(239,68,68,.25)" stroke-width="1.5"/>
+        <line x1="152" y1="33" x2="152" y2="52" stroke="rgba(239,68,68,.7)" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="143,47 152,56 161,47" stroke="rgba(239,68,68,.7)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="icon-wrap icon-rechnung">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">
+          han<strong>Rechnungs-DL</strong>
+          <span class="status status-live">Live</span>
+        </div>
+        <div class="card-desc">Automatischer PDF-Download aller Vodafone-Rechnungen per Playwright</div>
+      </div>
+      <div class="card-arrow">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-url">192.168.178.62 (https)</div>
+    </div>
+  </a>
 </div>
 
 <footer>
