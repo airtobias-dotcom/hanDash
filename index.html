@@ -117,6 +117,7 @@
     .card-clean::before   { background: radial-gradient(circle at 50% 0%, rgba(99,102,241,.08), transparent 70%); }
     .card-rechnung::before  { background: radial-gradient(circle at 50% 0%, rgba(239,68,68,.08), transparent 70%); }
     .card-files::before     { background: radial-gradient(circle at 50% 0%, rgba(234,179,8,.08),  transparent 70%); }
+    .card-studio::before    { background: radial-gradient(circle at 50% 0%, rgba(244,63,94,.08),   transparent 70%); }
 
     .icon-wrap {
       width: 56px;
@@ -137,6 +138,7 @@
     .icon-clean  { background: rgba(99,102,241,.15); color: #818cf8; }
     .icon-rechnung { background: rgba(239,68,68,.15);  color: #f87171; }
     .icon-files    { background: rgba(234,179,8,.15);  color: #facc15; }
+    .icon-studio   { background: rgba(244,63,94,.15);  color: #fb7185; }
 
     .card-body { display: flex; flex-direction: column; gap: 6px; flex: 1; }
 
@@ -209,6 +211,7 @@
     .ill-clean { background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(79,70,229,.06)); }
     .ill-rechnung{ background: linear-gradient(135deg, rgba(239,68,68,.12), rgba(220,38,38,.06)); }
     .ill-files   { background: linear-gradient(135deg, rgba(234,179,8,.12),  rgba(202,138,4,.06));  }
+    .ill-studio  { background: linear-gradient(135deg, rgba(244,63,94,.12),   rgba(225,29,72,.06));  }
 
     .ill-svg { opacity: 0.6; }
 
@@ -556,6 +559,50 @@
       <div class="card-meta-url">192.168.178.62 (https)</div>
     </div>
   </a>
+
+  <!-- StudioAllegro -->
+  <a class="card card-studio" href="#" target="_blank" rel="noopener">
+    <div class="illustration ill-studio">
+      <svg class="ill-svg" viewBox="0 0 200 90" fill="none" xmlns="http://www.w3.org/2000/svg" width="200">
+        <!-- Stage / floor -->
+        <rect x="20" y="55" width="160" height="18" rx="4" fill="rgba(244,63,94,.08)" stroke="rgba(244,63,94,.2)" stroke-width="1.5"/>
+        <!-- Dancer silhouette -->
+        <circle cx="70" cy="28" r="8" fill="rgba(244,63,94,.3)" stroke="rgba(244,63,94,.45)" stroke-width="1.5"/>
+        <line x1="70" y1="36" x2="70" y2="54" stroke="rgba(244,63,94,.5)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="70" y1="44" x2="58" y2="38" stroke="rgba(244,63,94,.4)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="70" y1="44" x2="84" y2="36" stroke="rgba(244,63,94,.4)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="70" y1="54" x2="60" y2="65" stroke="rgba(244,63,94,.4)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="70" y1="54" x2="80" y2="65" stroke="rgba(244,63,94,.4)" stroke-width="2" stroke-linecap="round"/>
+        <!-- Music notes -->
+        <text x="108" y="35" font-size="18" fill="rgba(244,63,94,.4)" font-family="serif">♪</text>
+        <text x="132" y="25" font-size="13" fill="rgba(244,63,94,.25)" font-family="serif">♫</text>
+        <text x="150" y="42" font-size="10" fill="rgba(244,63,94,.2)" font-family="serif">♩</text>
+      </svg>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="icon-wrap icon-studio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l12-2v13"/>
+          <circle cx="6" cy="18" r="3"/>
+          <circle cx="18" cy="16" r="3"/>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">
+          <strong>StudioAllegro</strong>
+          <span class="status status-pending">Deploy ausstehend</span>
+        </div>
+        <div class="card-desc">Management-Software für Ballett-Studios</div>
+      </div>
+      <div class="card-arrow">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-url">– URL folgt –</div>
+    </div>
+  </a>
+
 </div>
 
 <footer>
