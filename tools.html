@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tool-Sammlung – have a nice stay</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: rgba(255,255,255,.08);
+      --text: #f0f2f8;
+      --muted: #8890aa;
+      --radius: 18px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 24px 80px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.015) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 56px;
+      width: 100%;
+      max-width: 760px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      margin-bottom: 28px;
+      transition: color .15s;
+    }
+    .back-link:hover { color: var(--text); }
+
+    .logo {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    header h1 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #fff 30%, #8890aa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .tool-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 760px;
+    }
+
+    /* Category label */
+    .category {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 8px 0 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+
+    .tool-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity .2s ease;
+      border-radius: var(--radius);
+    }
+    .tool-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255,255,255,.15);
+      box-shadow: 0 16px 48px rgba(0,0,0,.35);
+    }
+    .tool-card:hover::before { opacity: 1; }
+
+    .tool-card-invoice::before { background: radial-gradient(circle at 0% 50%, rgba(234,179,8,.07), transparent 70%); }
+
+    .icon-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .icon-wrap svg { width: 24px; height: 24px; }
+
+    .icon-invoice { background: rgba(234,179,8,.15); color: #fbbf24; }
+
+    .tool-info { flex: 1; }
+
+    .tool-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tool-name {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+    .badge-manual  { background: rgba(234,179,8,.15);  color: #fbbf24; }
+    .badge-monthly { background: rgba(99,102,241,.15); color: #818cf8; }
+
+    .tool-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .tool-how {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: rgba(255,255,255,.55);
+      line-height: 1.55;
+    }
+
+    .tool-how strong {
+      color: rgba(255,255,255,.8);
+      font-weight: 600;
+    }
+
+    .tool-how code {
+      background: rgba(255,255,255,.06);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 12px;
+      color: #fbbf24;
+    }
+
+    .tool-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      font-size: 11.5px;
+      color: rgba(255,255,255,.2);
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+
+    footer {
+      margin-top: 64px;
+      color: rgba(255,255,255,.18);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .tool-card { flex-direction: column; gap: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="index.html">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Dashboard
+  </a>
+  <div class="logo">have a nice stay</div>
+  <h1>Tool-Sammlung</h1>
+  <p>Interne Skripte & Workflows – manuell oder monatlich ausgeführt</p>
+</header>
+
+<div class="tool-list">
+
+  <div class="category">Buchhaltung & Controlling</div>
+
+  <!-- Cleaning Invoice Check -->
+  <div class="tool-card tool-card-invoice">
+    <div class="icon-wrap icon-invoice">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14,2 14,8 20,8"/>
+        <polyline points="9,15 11,17 15,13"/>
+      </svg>
+    </div>
+    <div class="tool-info">
+      <div class="tool-header">
+        <div class="tool-name">Reinigungsrechnung prüfen</div>
+        <span class="badge badge-monthly">Monatlich</span>
+        <span class="badge badge-manual">Manuell</span>
+      </div>
+      <div class="tool-desc">
+        Gleicht die monatliche Rechnung von CleverOfficeClean (CoC) automatisch gegen Smoobu-Buchungsdaten ab.
+        Prüft für jede Position ob ein Checkout oder eine Belegung in Smoobu vorliegt, verifiziert Tagestypen (Mo–Sa vs. So/Feiertag)
+        und analysiert ob Anfahrtspauschalen korrekt und nur einmal pro Standort berechnet wurden.
+        Ausgabe als Excel-Datei mit zwei Tabs: Positionen + Anfahrten-Analyse.
+      </div>
+      <div class="tool-how">
+        <strong>So starten:</strong> PDF-Rechnung an Claude schicken:<br>
+        <code>bitte prüf die Rechnung @Downloads/RG12345.pdf</code><br><br>
+        Claude liest Smoobu automatisch aus (API-Key hinterlegt) und legt die Excel-Datei in <code>Downloads/</code> ab.
+        Script und Mapping-Tabelle liegen in <code>han-tools/cleaning-invoice/</code>.
+      </div>
+      <div class="tool-meta">han-tools/cleaning-invoice/verify_rechnung_template.py</div>
+    </div>
+  </div>
+
+</div>
+
+<footer id="footer"></footer>
+
+<script>
+  document.getElementById('footer').textContent =
+    `have a nice stay · Tool-Sammlung · ${new Date().getFullYear()}`;
+</script>
+
+</body>
+</html>
