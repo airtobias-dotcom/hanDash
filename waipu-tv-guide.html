@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fernseher nutzen – waipu.tv</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: #fff;
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      color: #1a1a2e;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 22px 32px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .header-left p {
+      font-size: 11px;
+      color: rgba(255,255,255,.5);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    .brand {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.4);
+      text-align: right;
+    }
+    .brand strong {
+      display: block;
+      font-size: 13px;
+      color: rgba(255,255,255,.8);
+      letter-spacing: 1px;
+    }
+
+    /* ── Intro strip ── */
+    .intro {
+      background: #f8f9ff;
+      border-bottom: 1px solid #e8eaf0;
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .intro-icon {
+      width: 32px;
+      height: 32px;
+      background: #1a1a2e;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .intro-icon svg { width: 18px; height: 18px; color: #fff; }
+    .intro-text { font-size: 12px; color: #555; line-height: 1.5; }
+    .intro-text strong { color: #1a1a2e; }
+
+    /* ── Steps ── */
+    .steps {
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .step-number {
+      width: 48px;
+      height: 48px;
+      background: #1a1a2e;
+      color: #fff;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .step-content {
+      background: #f8f9ff;
+      border: 1.5px solid #e8eaf0;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .step-illustration {
+      width: 100%;
+      height: 100px;
+      background: #1a1a2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      position: relative;
+    }
+
+    .step-text {
+      padding: 14px 18px 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 24px;
+    }
+
+    .step-de h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .step-de p { font-size: 12px; color: #444; line-height: 1.55; }
+
+    .step-en h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .step-en p { font-size: 12px; color: #777; line-height: 1.55; }
+
+    .lang-badge {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .de-badge { background: rgba(26,26,46,.1); color: #1a1a2e; }
+    .en-badge { background: rgba(0,0,0,.06); color: #666; }
+
+    /* ── Remote tip ── */
+    .tip-box {
+      margin: 0 32px;
+      background: #fff8e8;
+      border: 1.5px solid #fde68a;
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    .tip-icon {
+      font-size: 20px;
+      line-height: 1;
+      padding-top: 1px;
+    }
+    .tip-content { font-size: 11.5px; color: #78350f; line-height: 1.6; }
+    .tip-content strong { color: #92400e; }
+
+    /* ── Remote illustration ── */
+    .remote-section {
+      margin: 22px 32px 0;
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .remote-labels {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .remote-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #444;
+    }
+    .remote-label-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 28px;
+      padding: 14px 32px;
+      background: #f0f1f7;
+      border-top: 1px solid #e0e2ec;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-left { font-size: 10px; color: #888; line-height: 1.6; }
+    .footer-right {
+      font-size: 10px;
+      color: #aaa;
+      text-align: right;
+      font-style: italic;
+    }
+
+    /* ── SVG Illustrations ── */
+
+    /* Screen SVG */
+    .screen-svg { width: 100%; max-width: 380px; }
+
+    @media print {
+      body { width: 210mm; margin: 0; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="header">
+  <div class="header-left">
+    <h1>So nutzt du den Fernseher</h1>
+    <p>How to use the television</p>
+  </div>
+  <div class="brand">
+    have a
+    <strong>nice stay</strong>
+  </div>
+</div>
+
+<!-- ── Intro ── -->
+<div class="intro">
+  <div class="intro-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2"/>
+      <line x1="8" y1="21" x2="16" y2="21"/>
+      <line x1="12" y1="17" x2="12" y2="21"/>
+    </svg>
+  </div>
+  <div class="intro-text">
+    Dein Fernseher läuft mit <strong>waipu.tv</strong> – über 250 Sender, kostenlos, ohne Login.
+    Folge einfach den drei Schritten unten.&nbsp;&nbsp;·&nbsp;&nbsp;
+    Your TV runs <strong>waipu.tv</strong> – 250+ channels, free to use, no login needed. Just follow the three steps below.
+  </div>
+</div>
+
+<!-- ── Steps ── -->
+<div class="steps">
+
+  <!-- Step 1 -->
+  <div class="step">
+    <div class="step-number">1</div>
+    <div class="step-content">
+      <div class="step-illustration">
+        <!-- Home screen mockup -->
+        <svg class="screen-svg" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- TV frame -->
+          <rect x="1" y="1" width="398" height="98" rx="8" fill="#0d1117" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>
+          <!-- Top bar -->
+          <rect x="1" y="1" width="398" height="18" rx="8" fill="rgba(255,255,255,.05)"/>
+          <rect x="8" y="6" width="50" height="8" rx="4" fill="rgba(255,255,255,.5)"/>
+          <rect x="66" y="6" width="40" height="8" rx="4" fill="rgba(255,255,255,.2)"/>
+          <rect x="114" y="6" width="40" height="8" rx="4" fill="rgba(255,255,255,.2)"/>
+          <!-- App icons row -->
+          <!-- Netflix -->
+          <rect x="16" y="28" width="48" height="58" rx="6" fill="#e50914"/>
+          <text x="23" y="62" font-size="11" fill="white" font-family="Arial" font-weight="bold">NET</text>
+          <text x="23" y="75" font-size="11" fill="white" font-family="Arial" font-weight="bold">FLIX</text>
+          <!-- waipu.tv highlighted -->
+          <rect x="72" y="24" width="56" height="66" rx="6" fill="#005eff" stroke="#4d9fff" stroke-width="2.5"/>
+          <text x="79" y="53" font-size="9" fill="white" font-family="Arial" font-weight="bold">waipu.tv</text>
+          <!-- Arrow pointing to waipu -->
+          <path d="M 145 57 L 133 57" stroke="#facc15" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arr)"/>
+          <defs>
+            <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#facc15"/>
+            </marker>
+          </defs>
+          <!-- Prime Video -->
+          <rect x="136" y="28" width="48" height="58" rx="6" fill="#00a8e0"/>
+          <text x="143" y="58" font-size="8.5" fill="white" font-family="Arial" font-weight="bold">prime</text>
+          <!-- Disney+ -->
+          <rect x="192" y="28" width="48" height="58" rx="6" fill="#113ccf"/>
+          <text x="199" y="58" font-size="8" fill="white" font-family="Arial" font-weight="bold">Disney+</text>
+          <!-- YouTube -->
+          <rect x="248" y="28" width="48" height="58" rx="6" fill="#ff0000"/>
+          <text x="257" y="58" font-size="8.5" fill="white" font-family="Arial" font-weight="bold">YOU</text>
+          <!-- ZDF mediathek -->
+          <rect x="304" y="28" width="48" height="58" rx="6" fill="rgba(255,255,255,.1)" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+          <text x="311" y="58" font-size="8" fill="rgba(255,255,255,.7)" font-family="Arial">ZDF</text>
+          <!-- HOME badge -->
+          <rect x="72" y="16" width="56" height="12" rx="4" fill="#facc15"/>
+          <text x="82" y="25" font-size="8" fill="#1a1a2e" font-family="Arial" font-weight="bold">HOME</text>
+        </svg>
+      </div>
+      <div class="step-text">
+        <div class="step-de">
+          <h3><span class="lang-badge de-badge">DE</span> Startbildschirm</h3>
+          <p>Drücke die <strong>HOME-Taste</strong> auf der Fernbedienung. Wähle <strong>waipu.tv</strong> auf dem Startbildschirm aus und drücke <strong>OK</strong>.</p>
+        </div>
+        <div class="step-en">
+          <h3><span class="lang-badge en-badge">EN</span> Home screen</h3>
+          <p>Press the <strong>HOME button</strong> on the remote control. Select <strong>waipu.tv</strong> on the home screen and press <strong>OK</strong>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="step">
+    <div class="step-number">2</div>
+    <div class="step-content">
+      <div class="step-illustration">
+        <!-- waipu.tv app mockup -->
+        <svg class="screen-svg" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="398" height="98" rx="8" fill="#0d1422" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>
+          <!-- Top nav -->
+          <rect x="1" y="1" width="398" height="20" rx="8" fill="rgba(0,94,255,.2)"/>
+          <text x="12" y="15" font-size="10" fill="#4d9fff" font-family="Arial" font-weight="bold">waipu.tv</text>
+          <!-- Nav items -->
+          <rect x="80" y="6" width="55" height="10" rx="5" fill="rgba(255,255,255,.1)"/>
+          <text x="92" y="15" font-size="8" fill="rgba(255,255,255,.5)" font-family="Arial">Startseite</text>
+          <!-- PROGRAMM highlighted -->
+          <rect x="143" y="4" width="60" height="14" rx="5" fill="#005eff"/>
+          <text x="151" y="14" font-size="9" fill="white" font-family="Arial" font-weight="bold">Programm</text>
+          <!-- Arrow pointing to Programm -->
+          <path d="M 215 11 L 206 11" stroke="#facc15" stroke-width="2" stroke-linecap="round" marker-end="url(#arr2)"/>
+          <defs>
+            <marker id="arr2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#facc15"/>
+            </marker>
+          </defs>
+          <rect x="212" y="6" width="55" height="10" rx="5" fill="rgba(255,255,255,.08)"/>
+          <text x="222" y="15" font-size="8" fill="rgba(255,255,255,.4)" font-family="Arial">Merkliste</text>
+          <!-- Main content area hint -->
+          <text x="12" y="38" font-size="8.5" fill="rgba(255,255,255,.35)" font-family="Arial">Lädt…  ·  Falls kein Live-TV startet, klicke oben auf „Programm"</text>
+          <!-- Channel cards -->
+          <rect x="12" y="48" width="55" height="36" rx="4" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
+          <text x="22" y="70" font-size="7.5" fill="rgba(255,255,255,.5)" font-family="Arial">Das Erste</text>
+          <rect x="74" y="48" width="55" height="36" rx="4" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+          <text x="84" y="70" font-size="7.5" fill="rgba(255,255,255,.4)" font-family="Arial">ZDF</text>
+          <rect x="136" y="48" width="55" height="36" rx="4" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+          <text x="148" y="70" font-size="7.5" fill="rgba(255,255,255,.4)" font-family="Arial">RTL</text>
+          <rect x="198" y="48" width="55" height="36" rx="4" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+          <text x="210" y="70" font-size="7.5" fill="rgba(255,255,255,.4)" font-family="Arial">SAT.1</text>
+        </svg>
+      </div>
+      <div class="step-text">
+        <div class="step-de">
+          <h3><span class="lang-badge de-badge">DE</span> Programm öffnen</h3>
+          <p>Falls das Live-TV nicht automatisch startet: Wähle oben in der Navigation <strong>„Programm"</strong> aus.</p>
+        </div>
+        <div class="step-en">
+          <h3><span class="lang-badge en-badge">EN</span> Open programme</h3>
+          <p>If live TV does not start automatically: Select <strong>"Programm"</strong> in the top navigation bar.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="step">
+    <div class="step-number">3</div>
+    <div class="step-content">
+      <div class="step-illustration">
+        <!-- Channel list mockup -->
+        <svg class="screen-svg" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="398" height="98" rx="8" fill="#0d1422" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>
+          <!-- Left sidebar: channels -->
+          <rect x="1" y="1" width="100" height="98" rx="8" fill="rgba(0,0,0,.3)"/>
+          <!-- Channel rows -->
+          <rect x="6" y="8" width="88" height="16" rx="4" fill="#005eff"/>
+          <text x="12" y="20" font-size="8" fill="white" font-family="Arial" font-weight="bold">▶  Das Erste</text>
+          <rect x="6" y="28" width="88" height="14" rx="3" fill="rgba(255,255,255,.05)"/>
+          <text x="12" y="39" font-size="7.5" fill="rgba(255,255,255,.5)" font-family="Arial">ZDF</text>
+          <rect x="6" y="45" width="88" height="14" rx="3" fill="rgba(255,255,255,.05)"/>
+          <text x="12" y="56" font-size="7.5" fill="rgba(255,255,255,.5)" font-family="Arial">RTL</text>
+          <rect x="6" y="62" width="88" height="14" rx="3" fill="rgba(255,255,255,.05)"/>
+          <text x="12" y="73" font-size="7.5" fill="rgba(255,255,255,.5)" font-family="Arial">SAT.1</text>
+          <rect x="6" y="79" width="88" height="14" rx="3" fill="rgba(255,255,255,.05)"/>
+          <text x="12" y="90" font-size="7.5" fill="rgba(255,255,255,.5)" font-family="Arial">ProSieben</text>
+          <!-- Right: EPG / now playing -->
+          <rect x="108" y="5" width="284" height="90" rx="6" fill="rgba(255,255,255,.04)"/>
+          <text x="116" y="22" font-size="9" fill="rgba(255,255,255,.8)" font-family="Arial" font-weight="bold">Das Erste · Jetzt live</text>
+          <!-- Timeline bar -->
+          <rect x="116" y="30" width="270" height="6" rx="3" fill="rgba(255,255,255,.1)"/>
+          <rect x="116" y="30" width="110" height="6" rx="3" fill="#005eff"/>
+          <!-- Time labels -->
+          <text x="116" y="48" font-size="7" fill="rgba(255,255,255,.35)" font-family="Arial">20:00</text>
+          <text x="218" y="48" font-size="7" fill="rgba(255,255,255,.35)" font-family="Arial">21:00</text>
+          <text x="318" y="48" font-size="7" fill="rgba(255,255,255,.35)" font-family="Arial">22:00</text>
+          <!-- Program block -->
+          <rect x="116" y="54" width="108" height="22" rx="3" fill="rgba(0,94,255,.35)" stroke="#005eff" stroke-width="1"/>
+          <text x="122" y="65" font-size="7.5" fill="white" font-family="Arial" font-weight="bold">Tagesschau</text>
+          <text x="122" y="74" font-size="6.5" fill="rgba(255,255,255,.6)" font-family="Arial">20:00 – 20:15</text>
+          <rect x="228" y="54" width="160" height="22" rx="3" fill="rgba(255,255,255,.08)"/>
+          <text x="234" y="65" font-size="7.5" fill="rgba(255,255,255,.6)" font-family="Arial">Tatort</text>
+          <text x="234" y="74" font-size="6.5" fill="rgba(255,255,255,.4)" font-family="Arial">20:15 – 21:45</text>
+        </svg>
+      </div>
+      <div class="step-text">
+        <div class="step-de">
+          <h3><span class="lang-badge de-badge">DE</span> Sender wählen &amp; genießen</h3>
+          <p>Wähle deinen Sender aus der Liste mit den <strong>Pfeiltasten</strong> und bestätige mit <strong>OK</strong>. Viel Spaß beim Schauen!</p>
+        </div>
+        <div class="step-en">
+          <h3><span class="lang-badge en-badge">EN</span> Select channel &amp; enjoy</h3>
+          <p>Choose your channel from the list using the <strong>arrow buttons</strong> and confirm with <strong>OK</strong>. Have fun watching!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Tip Box ── -->
+<div class="tip-box">
+  <div class="tip-icon">&#128161;</div>
+  <div class="tip-content">
+    <strong>Sender direkt aufrufen:</strong> Gib die Sendernummer mit den <strong>Zahlentasten</strong> der Fernbedienung ein (z. B. <strong>1</strong> = Das Erste, <strong>2</strong> = ZDF, <strong>3</strong> = RTL). Drücke <strong>CH LIST</strong> für die vollständige Senderliste.
+    &nbsp;·&nbsp;
+    <strong>Direct channel access:</strong> Enter the channel number using the <strong>number buttons</strong> (e.g. <strong>1</strong> = Das Erste, <strong>2</strong> = ZDF, <strong>3</strong> = RTL). Press <strong>CH LIST</strong> for the full channel list.
+  </div>
+</div>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="footer-left">
+    Bei Problemen stehen wir gerne zur Verfügung.&nbsp; · &nbsp;If you need help, don't hesitate to contact us.<br>
+    <strong style="color:#1a1a2e">have a nice stay</strong>
+  </div>
+  <div class="footer-right">
+    waipu.tv · Hisense Smart TV<br>
+    Powered by VIDAA OS
+  </div>
+</footer>
+
+</body>
+</html>
