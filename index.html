@@ -119,6 +119,7 @@
     .card-rechnung::before  { background: radial-gradient(circle at 50% 0%, rgba(239,68,68,.08), transparent 70%); }
     .card-files::before     { background: radial-gradient(circle at 50% 0%, rgba(234,179,8,.08),  transparent 70%); }
     .card-studio::before    { background: radial-gradient(circle at 50% 0%, rgba(244,63,94,.08),   transparent 70%); }
+    .card-pms::before      { background: radial-gradient(circle at 50% 0%, rgba(14,165,233,.08),  transparent 70%); }
 
     .icon-wrap {
       width: 56px;
@@ -141,6 +142,7 @@
     .icon-rechnung { background: rgba(239,68,68,.15);  color: #f87171; }
     .icon-files    { background: rgba(234,179,8,.15);  color: #facc15; }
     .icon-studio   { background: rgba(244,63,94,.15);  color: #fb7185; }
+    .icon-pms     { background: rgba(14,165,233,.15); color: #38bdf8; }
 
     .card-body { display: flex; flex-direction: column; gap: 6px; flex: 1; }
 
@@ -644,6 +646,48 @@
     </div>
     <div class="card-meta">
       <div class="card-meta-url">192.168.178.62:5173</div>
+    </div>
+  </a>
+
+
+  <!-- hanPMS -->
+  <a class="card card-pms" href="https://pms.have-a-nice-stay.de" target="_blank" rel="noopener">
+    <div class="illustration ill-pms">
+      <svg class="ill-svg" viewBox="0 0 200 90" fill="none" xmlns="http://www.w3.org/2000/svg" width="200">
+        <rect x="20" y="10" width="80" height="70" rx="6" fill="rgba(14,165,233,.12)" stroke="rgba(14,165,233,.25)" stroke-width="1.5"/>
+        <rect x="30" y="22" width="46" height="5" rx="2.5" fill="rgba(14,165,233,.5)"/>
+        <rect x="30" y="33" width="32" height="3.5" rx="1.75" fill="rgba(14,165,233,.3)"/>
+        <rect x="30" y="41" width="38" height="3.5" rx="1.75" fill="rgba(14,165,233,.3)"/>
+        <rect x="30" y="49" width="28" height="3.5" rx="1.75" fill="rgba(14,165,233,.3)"/>
+        <rect x="30" y="57" width="20" height="10" rx="3" fill="rgba(14,165,233,.4)"/>
+        <rect x="114" y="10" width="64" height="29" rx="5" fill="rgba(14,165,233,.1)" stroke="rgba(14,165,233,.2)" stroke-width="1.2"/>
+        <rect x="121" y="17" width="28" height="4" rx="2" fill="rgba(14,165,233,.4)"/>
+        <rect x="121" y="25" width="20" height="4" rx="2" fill="rgba(14,165,233,.25)"/>
+        <rect x="114" y="47" width="64" height="29" rx="5" fill="rgba(14,165,233,.1)" stroke="rgba(14,165,233,.2)" stroke-width="1.2"/>
+        <rect x="121" y="54" width="28" height="4" rx="2" fill="rgba(14,165,233,.4)"/>
+        <rect x="121" y="62" width="20" height="4" rx="2" fill="rgba(14,165,233,.25)"/>
+      </svg>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="icon-wrap icon-pms">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9,22 9,12 15,12 15,22"/>
+        </svg>
+      </div>
+      <div class="card-body">
+        <div class="card-name">
+          han<strong>PMS</strong>
+          <span class="status status-live">Live</span>
+        </div>
+        <div class="card-desc">Property Management System – Buchungen, Workflows, Gästedaten, Channex</div>
+      </div>
+      <div class="card-arrow">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-url">pms.have-a-nice-stay.de</div>
     </div>
   </a>
 
