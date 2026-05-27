@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hanRND – Restnutzungsdauer</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;
+  --border:rgba(255,255,255,.08);--text:#f0f2f8;--muted:#8890aa;
+  --accent:#14b8a6;--accent2:#0d9488;--radius:14px;
+  --red:#ef4444;--green:#22c55e;--yellow:#eab308;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+
+/* ── Header ─────────────────────────── */
+#app-header{display:flex;align-items:center;gap:12px;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.hdr-logo{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;}
+.hdr-logo:hover{color:var(--text);}
+.hdr-sep{color:var(--border);font-size:18px;}
+.hdr-title{font-size:15px;font-weight:700;color:var(--accent);}
+.hdr-spacer{flex:1;}
+.hdr-email{font-size:12px;color:var(--muted);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,.2);}
+.btn-danger{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.2);}
+.btn-danger:hover{background:rgba(239,68,68,.25);}
+.btn-icon{padding:6px;border-radius:6px;}
+
+/* ── Main layout ─────────────────────── */
+#app-main{max-width:1100px;margin:0 auto;padding:32px 24px;}
+
+/* ── Toast ───────────────────────────── */
+#toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:9999;}
+.toast{padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;max-width:360px;animation:slideIn .2s ease;}
+.toast-success{background:#14532d;color:#4ade80;border:1px solid rgba(34,197,94,.3);}
+.toast-error{background:#450a0a;color:#f87171;border:1px solid rgba(239,68,68,.3);}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* ── Setup screen ────────────────────── */
+#setup-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:20px;text-align:center;}
+.setup-card{background:var(--surface);border:1px solid rgba(234,179,8,.3);border-radius:var(--radius);padding:40px;max-width:560px;}
+.setup-card h2{font-size:20px;margin-bottom:12px;color:#fbbf24;}
+.setup-card p{color:var(--muted);line-height:1.7;font-size:14px;}
+.setup-card code{background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:13px;color:#fbbf24;}
+
+/* ── Auth screen ─────────────────────── */
+#auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:40px;width:100%;max-width:400px;}
+.auth-card h2{font-size:20px;margin-bottom:24px;text-align:center;}
+.tab-row{display:flex;background:var(--surface2);border-radius:8px;padding:3px;margin-bottom:24px;}
+.tab{flex:1;text-align:center;padding:8px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);transition:all .15s;}
+.tab.active{background:var(--accent);color:#fff;}
+
+/* ── Form elements ───────────────────── */
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.form-group label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.form-control{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 14px;font-size:14px;width:100%;transition:border-color .15s;}
+.form-control:focus{outline:none;border-color:var(--accent);}
+.form-control::placeholder{color:rgba(136,144,170,.5);}
+textarea.form-control{resize:vertical;min-height:80px;}
+select.form-control{cursor:pointer;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+
+/* ── Radio / Checkbox groups ─────────── */
+.option-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:4px;}
+.option-item{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;user-select:none;}
+.option-item:hover{border-color:rgba(20,184,166,.3);}
+.option-item.selected{border-color:var(--accent);background:rgba(20,184,166,.1);}
+.option-item input{display:none;}
+.option-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;transition:all .15s;}
+.option-item.selected .option-dot{border-color:var(--accent);background:var(--accent);}
+.option-check{width:14px;height:14px;border-radius:3px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.option-item.selected .option-check{border-color:var(--accent);background:var(--accent);}
+.option-check-mark{font-size:9px;color:#fff;display:none;}
+.option-item.selected .option-check-mark{display:block;}
+
+/* ── Section cards ───────────────────── */
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:20px;}
+.section-title{font-size:16px;font-weight:700;margin-bottom:20px;color:var(--text);display:flex;align-items:center;gap:10px;}
+.section-badge{font-size:11px;background:rgba(20,184,166,.15);color:var(--accent);padding:3px 8px;border-radius:20px;font-weight:700;}
+
+/* ── Dashboard ───────────────────────── */
+.dashboard-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.dashboard-title{font-size:24px;font-weight:800;}
+.search-box{position:relative;}
+.search-box input{padding-left:36px;width:280px;}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);}
+
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+th{padding:12px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);}
+td{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.02);}
+.empty-row td{text-align:center;color:var(--muted);padding:48px;}
+
+/* ── Progress / wizard ───────────────── */
+.wizard-header{margin-bottom:28px;}
+.wizard-title{font-size:20px;font-weight:800;margin-bottom:4px;}
+.wizard-sub{color:var(--muted);font-size:13px;margin-bottom:16px;}
+.step-bar{display:flex;gap:6px;align-items:center;}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;transition:all .2s;}
+.step-dot.done{background:var(--accent);color:#fff;}
+.step-dot.active{background:rgba(20,184,166,.2);color:var(--accent);border:2px solid var(--accent);}
+.step-dot.pending{background:var(--surface2);color:var(--muted);}
+.step-line{flex:1;height:2px;background:var(--border);}
+.step-line.done{background:var(--accent);}
+.wizard-actions{display:flex;gap:10px;margin-top:28px;padding-top:20px;border-top:1px solid var(--border);}
+
+/* ── Mod table ───────────────────────── */
+.mod-table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+.mod-table th{font-size:11px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;}
+.mod-table td{padding:8px;border-bottom:1px solid rgba(255,255,255,.04);}
+.mod-table tr:last-child td{border-bottom:none;}
+.mod-period-cell{display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 8px;border-radius:6px;transition:all .15s;}
+.mod-period-cell:hover{background:var(--surface2);}
+.mod-period-cell.selected{background:rgba(20,184,166,.1);}
+.mod-anteil-input{width:64px;padding:4px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;}
+.mod-anteil-input:focus{outline:none;border-color:var(--accent);}
+
+/* ── Media grid ──────────────────────── */
+.media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;}
+.media-thumb{position:relative;border-radius:8px;overflow:hidden;background:var(--surface2);aspect-ratio:4/3;}
+.media-thumb img{width:100%;height:100%;object-fit:cover;}
+.media-thumb-del{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);color:#f87171;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;}
+.media-thumb-del:hover{background:rgba(239,68,68,.5);}
+.media-desc{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:6px 8px;font-size:11px;color:#fff;}
+.upload-area{border:2px dashed var(--border);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:border-color .15s;}
+.upload-area:hover{border-color:var(--accent);}
+
+/* ── Detail view ─────────────────────── */
+.detail-section{margin-bottom:24px;}
+.detail-section h3{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+.detail-field{background:var(--surface2);border-radius:8px;padding:12px;}
+.detail-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.detail-value{font-size:14px;color:var(--text);}
+
+/* ── Completion badge ─────────────────── */
+.completion-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;}
+.c-low{background:rgba(239,68,68,.15);color:#f87171;}
+.c-mid{background:rgba(234,179,8,.15);color:#fbbf24;}
+.c-high{background:rgba(34,197,94,.15);color:#4ade80;}
+
+/* ── Auftraggeber manager ─────────────── */
+.ag-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;align-items:center;gap:16px;margin-bottom:10px;}
+.ag-avatar{width:44px;height:44px;border-radius:50%;background:rgba(20,184,166,.15);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;}
+.ag-info{flex:1;}
+.ag-name{font-weight:700;margin-bottom:2px;}
+.ag-detail{font-size:12px;color:var(--muted);}
+
+/* ── Inline form toggle ───────────────── */
+.inline-form{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-top:12px;}
+.toggle-check{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.toggle-switch{width:40px;height:22px;background:var(--surface2);border-radius:11px;position:relative;transition:background .2s;border:1px solid var(--border);flex-shrink:0;}
+.toggle-switch.on{background:var(--accent);}
+.toggle-knob{position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .2s;}
+.toggle-switch.on .toggle-knob{left:21px;}
+
+/* ── Loader ───────────────────────────── */
+.loader{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-overlay{position:fixed;inset:0;background:rgba(15,17,23,.6);display:flex;align-items:center;justify-content:center;z-index:500;}
+
+/* ── Breadcrumbs ─────────────────────── */
+.breadcrumbs{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:20px;}
+.breadcrumbs a{color:var(--muted);text-decoration:none;cursor:pointer;}
+.breadcrumbs a:hover{color:var(--text);}
+.breadcrumbs span{color:rgba(255,255,255,.2);}
+
+/* ── Responsive ──────────────────────── */
+@media(max-width:768px){
+  .form-row,.form-row-3{grid-template-columns:1fr;}
+  .media-grid{grid-template-columns:repeat(2,1fr);}
+  .option-grid{grid-template-columns:1fr 1fr;}
+  .dashboard-header{flex-direction:column;align-items:flex-start;}
+  .search-box input{width:100%;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════════════════════ -->
+<div id="app-header">
+  <a class="hdr-logo" href="index.html">hanDash</a>
+  <span class="hdr-sep">/</span>
+  <span class="hdr-title">hanRND – Restnutzungsdauer</span>
+  <div class="hdr-spacer"></div>
+  <span class="hdr-email" id="hdr-email"></span>
+  <button class="btn btn-ghost btn-sm" id="btn-logout" style="margin-left:10px;display:none;">Abmelden</button>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading-overlay" style="display:none;">
+  <div class="loader" style="width:36px;height:36px;border-width:3px;"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     APP ROOT
+════════════════════════════════════════════════════════════ -->
+<div id="app-root"></div>
+
+<script>
+'use strict';
+
+// ────────────────────────────────────────────────────────────
+// CONFIG – replace these with your Supabase project values
+// ────────────────────────────────────────────────────────────
+const SUPABASE_URL      = 'https://osimhkucprzrrfzjnryo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zaW1oa3VjcHJ6cnJmempucnlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MDQxMjgsImV4cCI6MjA5NTQ4MDEyOH0.gZ3paVUnQxjnqGnAMsFH0YduulmpR_HBeRHNK590dYk';
+
+// ────────────────────────────────────────────────────────────
+// CONSTANTS
+// ────────────────────────────────────────────────────────────
+const ART_IMMOBILIE_OPTIONS = [
+  'Eigentumswohnung (ETW)',
+  'Einfamilienhaus (EFH)',
+  'Zweifamilienhaus (ZFH)',
+  'Mehrfamilienhaus (MFH)',
+  'Doppelhaushälfte (DHH)',
+  'Reihenhaus',
+  'Gewerbeobjekt',
+  'Sonstiges',
+];
+const BAUWEISE_OPTIONS = ['Massivbau','Holzständerbauweise','Fertighaus','Fachwerkbau','Mischbauweise','Sonstiges'];
+const BAEDER_OPTIONS   = ['Einfach','Standard','Gehoben','Luxus'];
+const DACHART_OPTIONS  = ['Flachdach','Satteldach','Walmdach','Mansarddach','Pultdach','Sheddach','Sonstiges'];
+const VERGLASUNG_OPTIONS = ['Einfachverglasung','2-fach Verglasung','3-fach Verglasung','Sonstiges'];
+const HEIZUNG_OPTIONS  = ['Zentralheizung Gas','Zentralheizung Öl','Fernwärme','Wärmepumpe','Elektroheizung','Fußbodenheizung','Kachelofen/Kamin','Pelletheizung','Sonstiges'];
+const KELLER_OPTIONS   = ['Kein Keller','Teilkeller','Vollkeller','Tiefgarage'];
+const GRUNDRISS_OPTIONS = ['Sehr gut geschnitten','Gut geschnitten','Normal geschnitten','Ungünstig geschnitten','Sehr ungünstig geschnitten'];
+const GUTACHTEN_TYP_OPTIONS = [
+  { val:'ETW_270',     label:'ETW – Eigentumswohnung (270 €)' },
+  { val:'MFH_EFH_470', label:'MFH / EFH (470 €)' },
+  { val:'VOR_ORT',     label:'Vor-Ort-Besichtigung (Preis auf Anfrage)' },
+];
+const MOD_CATEGORIES = [
+  { key:'mod_dach',           label:'3.1 Dacherneuerung inkl. Verbesserung der Wärmedämmung' },
+  { key:'mod_fenster',        label:'3.2 Modernisierung der Fenster und Außentüren' },
+  { key:'mod_leitungen',      label:'3.3 Modernisierung Leitungssysteme (Strom, Gas, Wasser, Abwasser)' },
+  { key:'mod_heizung_anlage', label:'3.4 Modernisierung der Heizungsanlage' },
+  { key:'mod_waermedaemmung', label:'3.5 Wärmedämmung der Außenwände' },
+  { key:'mod_baeder',         label:'3.6 Modernisierung von Bädern' },
+  { key:'mod_innenausbau',    label:'3.7 Modernisierung des Innenausbaus' },
+];
+const MOD_PERIODS = [
+  { key:'nicht',    label:'nicht stattgefunden' },
+  { key:'letzte5',  label:'in den letzten 5 Jahren' },
+  { key:'vor5_10',  label:'vor circa 5–10 Jahren' },
+  { key:'vor10_15', label:'vor circa 10–15 Jahren' },
+  { key:'vor15_20', label:'vor circa 15–20 Jahren' },
+  { key:'mehr20',   label:'vor mehr als 20 Jahren' },
+];
+const STEP_LABELS = [
+  'Auftraggeber','Adresse & Typ','Art & Basisinfos',
+  'Bauweise','Modernisierungen','Unterlagen & Details','Medien'
+];
+
+// ────────────────────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────────────────────
+const S = {
+  session: null,
+  view: 'dashboard', // setup | login | dashboard | auftraggeber | form | detail
+  immobilien: [],
+  auftraggeber: [],
+  media: {},          // { [immobilie_id]: [] }
+  editing: null,      // id being edited
+  detail: null,       // id being viewed
+  formStep: 0,
+  draft: {},
+  loading: false,
+  searchQ: '',
+};
+
+// ────────────────────────────────────────────────────────────
+// SUPABASE INIT
+// ────────────────────────────────────────────────────────────
+let sb = null;
+
+function initSupabase() {
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL') return false;
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return true;
+  } catch(e) {
+    console.error('Supabase init failed', e);
+    return false;
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// UTILITIES
+// ────────────────────────────────────────────────────────────
+function $(id){ return document.getElementById(id); }
+function el(tag,cls,html){
+  const e=document.createElement(tag);
+  if(cls) e.className=cls;
+  if(html!==undefined) e.innerHTML=html;
+  return e;
+}
+function toast(msg, type='success', dur=3500) {
+  const c = $('toast-container');
+  const t = el('div','toast toast-'+type, escHtml(msg));
+  c.appendChild(t);
+  setTimeout(()=>t.remove(), dur);
+}
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function setLoading(v) {
+  S.loading=v;
+  $('loading-overlay').style.display = v ? 'flex' : 'none';
+}
+function initials(vorname,nachname){ return ((vorname||'')[0]||'')+ ((nachname||'')[0]||''); }
+function formatDate(d){ if(!d) return '–'; return new Date(d).toLocaleDateString('de-DE'); }
+function computeCompletion(r) {
+  let fields = 0, filled = 0;
+  const checks = ['bezeichnung','strasse','ort','baujahr','art_immobilie','bauweise','gutachten_typ',
+    'mod_dach','mod_fenster','mod_leitungen','mod_heizung_anlage','mod_waermedaemmung','mod_baeder','mod_innenausbau'];
+  checks.forEach(k=>{ fields++; if(r[k] && r[k]!=='' && (typeof r[k]!=='object'||r[k]!==null)) filled++; });
+  return Math.round((filled/fields)*100);
+}
+function completionBadge(pct) {
+  const cls = pct>=80?'c-high':pct>=40?'c-mid':'c-low';
+  return `<span class="completion-badge ${cls}">${pct}%</span>`;
+}
+
+// ────────────────────────────────────────────────────────────
+// DATA LAYER
+// ────────────────────────────────────────────────────────────
+async function loadImmobilien() {
+  if(!sb||!S.session) return;
+  const { data, error } = await sb.from('immobilien').select('*').order('created_at',{ascending:false});
+  if(error){ toast('Fehler beim Laden der Immobilien: '+error.message,'error'); return; }
+  S.immobilien = data||[];
+}
+async function loadAuftraggeber() {
+  if(!sb||!S.session) return;
+  const { data, error } = await sb.from('auftraggeber').select('*').order('nachname');
+  if(error){ toast('Fehler beim Laden der Auftraggeber: '+error.message,'error'); return; }
+  S.auftraggeber = data||[];
+}
+async function loadMedia(immobilie_id) {
+  if(!sb||!S.session) return [];
+  const { data, error } = await sb.from('immobilien_media').select('*').eq('immobilie_id',immobilie_id).order('created_at');
+  if(error){ toast('Fehler beim Laden der Medien: '+error.message,'error'); return []; }
+  return data||[];
+}
+async function saveImmobilie(draft) {
+  if(!sb||!S.session) return null;
+  const record = { ...draft, user_id: S.session.user.id };
+  delete record.id;
+  let result;
+  if(S.editing) {
+    const { data, error } = await sb.from('immobilien').update(record).eq('id',S.editing).select().single();
+    if(error){ toast('Speichern fehlgeschlagen: '+error.message,'error'); return null; }
+    result = data;
+  } else {
+    const { data, error } = await sb.from('immobilien').insert(record).select().single();
+    if(error){ toast('Speichern fehlgeschlagen: '+error.message,'error'); return null; }
+    result = data;
+  }
+  return result;
+}
+async function deleteImmobilie(id) {
+  const { error } = await sb.from('immobilien').delete().eq('id',id);
+  if(error){ toast('Löschen fehlgeschlagen: '+error.message,'error'); return false; }
+  return true;
+}
+async function saveAuftraggeber(data) {
+  if(!sb||!S.session) return null;
+  const record = { ...data, user_id: S.session.user.id };
+  let result;
+  if(data.id) {
+    const id=data.id; delete record.id;
+    const { data:d, error } = await sb.from('auftraggeber').update(record).eq('id',id).select().single();
+    if(error){ toast('Fehler: '+error.message,'error'); return null; }
+    result=d;
+  } else {
+    delete record.id;
+    const { data:d, error } = await sb.from('auftraggeber').insert(record).select().single();
+    if(error){ toast('Fehler: '+error.message,'error'); return null; }
+    result=d;
+  }
+  return result;
+}
+async function deleteAuftraggeber(id) {
+  const { error } = await sb.from('auftraggeber').delete().eq('id',id);
+  if(error){ toast('Fehler: '+error.message,'error'); return false; }
+  return true;
+}
+async function uploadPhoto(file, immobilie_id) {
+  const ext = file.name.split('.').pop();
+  const fname = `${Date.now()}_${Math.random().toString(36).substr(2,6)}.${ext}`;
+  const path  = `${S.session.user.id}/${immobilie_id}/${fname}`;
+  const { error: upErr } = await sb.storage.from('immobilien-media').upload(path, file);
+  if(upErr){ toast('Upload fehlgeschlagen: '+upErr.message,'error'); return null; }
+  const { data: urlData } = sb.storage.from('immobilien-media').getPublicUrl(path);
+  const url = urlData?.publicUrl || '';
+  const { data, error } = await sb.from('immobilien_media').insert({
+    immobilie_id, user_id: S.session.user.id,
+    typ:'foto', dateiname:file.name, storage_path:path, url, beschreibung:''
+  }).select().single();
+  if(error){ toast('DB-Eintrag fehlgeschlagen: '+error.message,'error'); return null; }
+  return data;
+}
+async function addVideoUrl(immobilie_id, url) {
+  const { data, error } = await sb.from('immobilien_media').insert({
+    immobilie_id, user_id: S.session.user.id,
+    typ:'video_url', dateiname:'', storage_path:'', url, beschreibung:''
+  }).select().single();
+  if(error){ toast('Fehler: '+error.message,'error'); return null; }
+  return data;
+}
+async function deleteMedia(item) {
+  if(item.typ==='foto' && item.storage_path) {
+    await sb.storage.from('immobilien-media').remove([item.storage_path]);
+  }
+  await sb.from('immobilien_media').delete().eq('id',item.id);
+}
+
+// ────────────────────────────────────────────────────────────
+// ROUTER / RENDERER
+// ────────────────────────────────────────────────────────────
+function render() {
+  const root = $('app-root');
+  root.innerHTML = '';
+  // header state
+  const emailEl = $('hdr-email');
+  const logoutBtn = $('btn-logout');
+  if(S.session){
+    emailEl.textContent = S.session.user.email;
+    logoutBtn.style.display='inline-flex';
+  } else {
+    emailEl.textContent='';
+    logoutBtn.style.display='none';
+  }
+
+  if(SUPABASE_URL==='YOUR_SUPABASE_URL'){ renderSetup(root); return; }
+  if(!S.session){ renderAuth(root); return; }
+  switch(S.view){
+    case 'dashboard':    renderDashboard(root); break;
+    case 'auftraggeber': renderAuftraggeber(root); break;
+    case 'form':         renderForm(root); break;
+    case 'detail':       renderDetail(root); break;
+    default:             renderDashboard(root);
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// SETUP SCREEN
+// ────────────────────────────────────────────────────────────
+function renderSetup(root) {
+  root.innerHTML = `
+    <div id="setup-screen">
+      <div class="setup-card">
+        <h2>⚙️ Supabase-Konfiguration erforderlich</h2>
+        <p>
+          Bitte öffne die Datei <code>restnutzungsdauer.html</code> in einem Texteditor
+          und ersetze die Platzhalter am Anfang des &lt;script&gt;-Blocks:
+        </p>
+        <br>
+        <p>
+          <code>const SUPABASE_URL = 'https://supabase.com/dashboard/project/osimhkucprzrrfzjnryo';</code><br><br>
+          <code>const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zaW1oa3VjcHJ6cnJmempucnlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MDQxMjgsImV4cCI6MjA5NTQ4MDEyOH0.gZ3paVUnQxjnqGnAMsFH0YduulmpR_HBeRHNK590dYk';</code>
+        </p>
+        <br>
+        <p>
+          Eine Schritt-für-Schritt-Anleitung findest du in <code>SUPABASE_SETUP.md</code>.
+        </p>
+      </div>
+    </div>`;
+}
+
+// ────────────────────────────────────────────────────────────
+// AUTH SCREEN
+// ────────────────────────────────────────────────────────────
+function renderAuth(root) {
+  root.innerHTML = `
+    <div id="auth-screen">
+      <div class="auth-card">
+        <h2>hanRND</h2>
+        <div class="tab-row">
+          <div class="tab active" id="tab-login" onclick="switchTab('login')">Anmelden</div>
+          <div class="tab" id="tab-register" onclick="switchTab('register')">Registrieren</div>
+        </div>
+        <div id="auth-form">
+          <div class="form-group">
+            <label>E-Mail</label>
+            <input type="email" class="form-control" id="auth-email" placeholder="name@example.com">
+          </div>
+          <div class="form-group">
+            <label>Passwort</label>
+            <input type="password" class="form-control" id="auth-pw" placeholder="••••••••">
+          </div>
+          <button class="btn btn-primary" style="width:100%;" id="auth-btn" onclick="doAuth()">Anmelden</button>
+          <p style="margin-top:12px;color:var(--muted);font-size:12px;text-align:center;" id="auth-msg"></p>
+        </div>
+      </div>
+    </div>`;
+  // Enter key support
+  setTimeout(()=>{
+    const pw=$('auth-pw');
+    if(pw) pw.addEventListener('keydown',e=>{ if(e.key==='Enter') doAuth(); });
+    const em=$('auth-email');
+    if(em) em.addEventListener('keydown',e=>{ if(e.key==='Enter') doAuth(); });
+  },0);
+}
+let authMode='login';
+function switchTab(mode){
+  authMode=mode;
+  ['login','register'].forEach(m=>{
+    $('tab-'+m).classList.toggle('active',m===mode);
+  });
+  $('auth-btn').textContent = mode==='login' ? 'Anmelden' : 'Registrieren';
+}
+async function doAuth(){
+  const email=($('auth-email')||{}).value||'';
+  const pw=($('auth-pw')||{}).value||'';
+  if(!email||!pw){ toast('Bitte E-Mail und Passwort eingeben','error'); return; }
+  setLoading(true);
+  let result;
+  if(authMode==='login'){
+    result = await sb.auth.signInWithPassword({email,password:pw});
+  } else {
+    result = await sb.auth.signUp({email,password:pw});
+  }
+  setLoading(false);
+  if(result.error){ toast(result.error.message,'error'); return; }
+  if(authMode==='register' && !result.data?.session){
+    $('auth-msg').textContent='Bitte bestätige deine E-Mail-Adresse.';
+    return;
+  }
+  S.session = result.data.session;
+  await loadAll();
+  S.view='dashboard';
+  render();
+}
+async function doLogout(){
+  await sb.auth.signOut();
+  S.session=null; S.immobilien=[]; S.auftraggeber=[];
+  S.view='login'; S.editing=null; S.detail=null; S.draft={};
+  render();
+}
+
+// ────────────────────────────────────────────────────────────
+// DASHBOARD
+// ────────────────────────────────────────────────────────────
+function renderDashboard(root) {
+  const filtered = S.immobilien.filter(r=>{
+    const q=S.searchQ.toLowerCase();
+    if(!q) return true;
+    return [r.bezeichnung,r.strasse,r.ort,r.art_immobilie].some(v=>(v||'').toLowerCase().includes(q));
+  });
+
+  const rows = filtered.length ? filtered.map(r=>{
+    const ag = S.auftraggeber.find(a=>a.id===r.auftraggeber_id);
+    const pct = computeCompletion(r);
+    return `<tr>
+      <td><strong>${escHtml(r.bezeichnung||'–')}</strong></td>
+      <td>${escHtml([r.strasse,r.hausnummer,r.ort].filter(Boolean).join(' '))}</td>
+      <td>${escHtml(r.art_immobilie||'–')}</td>
+      <td>${r.baujahr||'–'}</td>
+      <td>${ag?escHtml(ag.vorname+' '+ag.nachname):'–'}</td>
+      <td>${completionBadge(pct)}</td>
+      <td>${formatDate(r.created_at)}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-ghost btn-sm btn-icon" title="Ansehen" onclick="viewDetail('${r.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="btn btn-ghost btn-sm btn-icon" title="Bearbeiten" onclick="editImmobilie('${r.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="btn btn-danger btn-sm btn-icon" title="Löschen" onclick="confirmDelete('${r.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
+      </td>
+    </tr>`;
+  }).join('') : `<tr class="empty-row"><td colspan="8">Keine Immobilien vorhanden. Lege jetzt eine neue an!</td></tr>`;
+
+  root.innerHTML = `
+    <div id="app-main">
+      <div class="dashboard-header">
+        <div class="dashboard-title">Immobilien <span style="font-size:16px;color:var(--muted);font-weight:400;">(${S.immobilien.length})</span></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div class="search-box">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" class="form-control search-box" id="search-input" placeholder="Suchen..." value="${escHtml(S.searchQ)}" oninput="doSearch(this.value)">
+          </div>
+          <button class="btn btn-ghost" onclick="navAuftraggeber()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Auftraggeber
+          </button>
+          <button class="btn btn-primary" onclick="newImmobilie()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Neue Immobilie
+          </button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Bezeichnung</th><th>Adresse</th><th>Art</th>
+            <th>Baujahr</th><th>Auftraggeber</th><th>Vollständigkeit</th>
+            <th>Erstellt</th><th>Aktionen</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function doSearch(v){ S.searchQ=v; renderDashboard($('app-root').querySelector('#app-main').parentElement||$('app-root')); }
+// re-render just the dashboard content without full render cycle
+function doSearch(v){ S.searchQ=v; render(); }
+
+function navAuftraggeber(){ S.view='auftraggeber'; render(); }
+function newImmobilie(){
+  S.editing=null; S.formStep=0;
+  S.draft={}; S.view='form'; render();
+}
+function editImmobilie(id){
+  const r=S.immobilien.find(x=>x.id===id);
+  if(!r) return;
+  S.editing=id; S.formStep=0;
+  S.draft={...r}; S.view='form'; render();
+}
+function viewDetail(id){
+  S.detail=id; S.view='detail'; render();
+}
+async function confirmDelete(id){
+  if(!confirm('Diese Immobilie wirklich löschen?')) return;
+  setLoading(true);
+  const ok = await deleteImmobilie(id);
+  if(ok){ toast('Immobilie gelöscht'); await loadImmobilien(); }
+  setLoading(false);
+  S.view='dashboard'; render();
+}
+
+// ────────────────────────────────────────────────────────────
+// AUFTRAGGEBER MANAGER
+// ────────────────────────────────────────────────────────────
+let agEditId = null;
+function renderAuftraggeber(root) {
+  const cards = S.auftraggeber.map(a=>`
+    <div class="ag-card">
+      <div class="ag-avatar">${escHtml(initials(a.vorname,a.nachname)||'?')}</div>
+      <div class="ag-info">
+        <div class="ag-name">${escHtml(a.vorname)} ${escHtml(a.nachname)}</div>
+        <div class="ag-detail">${escHtml([a.strasse,a.hausnummer,a.plz,a.ort].filter(Boolean).join(' '))} ${a.email?'· '+escHtml(a.email):''} ${a.mobil?'· '+escHtml(a.mobil):''}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="editAg('${a.id}')">Bearbeiten</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteAg('${a.id}')">Löschen</button>
+    </div>`).join('') || '<p style="color:var(--muted);padding:20px 0;">Noch keine Auftraggeber angelegt.</p>';
+
+  root.innerHTML = `
+    <div id="app-main">
+      <div class="breadcrumbs">
+        <a onclick="S.view='dashboard';render()">Dashboard</a>
+        <span>/</span> Auftraggeber
+      </div>
+      <div class="dashboard-header">
+        <div class="dashboard-title">Auftraggeber</div>
+        <button class="btn btn-primary" onclick="openAgForm(null)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Neuer Auftraggeber
+        </button>
+      </div>
+      <div id="ag-form-wrap"></div>
+      <div id="ag-list">${cards}</div>
+    </div>`;
+}
+
+function openAgForm(id){
+  agEditId = id;
+  const ag = id ? S.auftraggeber.find(a=>a.id===id)||{} : {};
+  const wrap=$('ag-form-wrap');
+  wrap.innerHTML=`
+    <div class="inline-form" style="margin-bottom:20px;">
+      <div class="section-title" style="margin-bottom:16px;">${id?'Auftraggeber bearbeiten':'Neuen Auftraggeber anlegen'}</div>
+      <div class="form-row">
+        <div class="form-group"><label>Vorname*</label><input class="form-control" id="ag-vorname" value="${escHtml(ag.vorname||'')}"></div>
+        <div class="form-group"><label>Nachname*</label><input class="form-control" id="ag-nachname" value="${escHtml(ag.nachname||'')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Straße</label><input class="form-control" id="ag-strasse" value="${escHtml(ag.strasse||'')}"></div>
+        <div class="form-group"><label>Hausnummer</label><input class="form-control" id="ag-hausnummer" value="${escHtml(ag.hausnummer||'')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>PLZ</label><input class="form-control" id="ag-plz" value="${escHtml(ag.plz||'')}"></div>
+        <div class="form-group"><label>Ort</label><input class="form-control" id="ag-ort" value="${escHtml(ag.ort||'')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Mobil</label><input class="form-control" id="ag-mobil" value="${escHtml(ag.mobil||'')}"></div>
+        <div class="form-group"><label>E-Mail</label><input class="form-control" type="email" id="ag-email" value="${escHtml(ag.email||'')}"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button class="btn btn-primary" onclick="submitAg()">Speichern</button>
+        <button class="btn btn-ghost" onclick="$('ag-form-wrap').innerHTML=''">Abbrechen</button>
+      </div>
+    </div>`;
+}
+async function submitAg(){
+  const data = {
+    id: agEditId||undefined,
+    vorname:($('ag-vorname')||{}).value||'',
+    nachname:($('ag-nachname')||{}).value||'',
+    strasse:($('ag-strasse')||{}).value||'',
+    hausnummer:($('ag-hausnummer')||{}).value||'',
+    plz:($('ag-plz')||{}).value||'',
+    ort:($('ag-ort')||{}).value||'',
+    mobil:($('ag-mobil')||{}).value||'',
+    email:($('ag-email')||{}).value||'',
+  };
+  if(!data.vorname||!data.nachname){ toast('Vorname und Nachname sind Pflichtfelder','error'); return; }
+  setLoading(true);
+  const res = await saveAuftraggeber(data);
+  setLoading(false);
+  if(!res) return;
+  toast('Auftraggeber gespeichert');
+  await loadAuftraggeber();
+  S.view='auftraggeber'; render();
+}
+async function editAg(id){ openAgForm(id); }
+async function deleteAg(id){
+  if(!confirm('Auftraggeber wirklich löschen?')) return;
+  setLoading(true);
+  await deleteAuftraggeber(id);
+  setLoading(false);
+  toast('Auftraggeber gelöscht');
+  await loadAuftraggeber();
+  render();
+}
+
+// ────────────────────────────────────────────────────────────
+// WIZARD FORM
+// ────────────────────────────────────────────────────────────
+function renderForm(root) {
+  const totalSteps = STEP_LABELS.length;
+  const stepBar = STEP_LABELS.map((lbl,i)=>{
+    const state = i<S.formStep?'done':i===S.formStep?'active':'pending';
+    const line = i<totalSteps-1 ? `<div class="step-line ${i<S.formStep?'done':''}"></div>` : '';
+    return `<div class="step-dot ${state}" title="${escHtml(lbl)}">${i<S.formStep?'✓':(i+1)}</div>${line}`;
+  }).join('');
+
+  root.innerHTML = `
+    <div id="app-main">
+      <div class="breadcrumbs">
+        <a onclick="S.view='dashboard';render()">Dashboard</a>
+        <span>/</span> ${S.editing?'Immobilie bearbeiten':'Neue Immobilie'}
+      </div>
+      <div class="wizard-header">
+        <div class="wizard-title">${S.editing?'Immobilie bearbeiten':'Neue Immobilie anlegen'}</div>
+        <div class="wizard-sub">Schritt ${S.formStep+1} von ${totalSteps}: ${STEP_LABELS[S.formStep]}</div>
+        <div class="step-bar">${stepBar}</div>
+      </div>
+      <div id="form-step-content"></div>
+    </div>`;
+  renderFormStep();
+}
+
+function renderFormStep() {
+  const c=$('form-step-content');
+  if(!c) return;
+  switch(S.formStep){
+    case 0: c.innerHTML = buildStep0(); break;
+    case 1: c.innerHTML = buildStep1(); break;
+    case 2: c.innerHTML = buildStep2(); break;
+    case 3: c.innerHTML = buildStep3(); break;
+    case 4: c.innerHTML = buildStep4(); break;
+    case 5: c.innerHTML = buildStep5(); break;
+    case 6: c.innerHTML = buildStep6(); break;
+  }
+  bindStepEvents();
+}
+
+// ── STEP 0: Auftraggeber ──────────────────────────────────
+function buildStep0() {
+  const agOptions = S.auftraggeber.map(a=>
+    `<option value="${a.id}" ${S.draft.auftraggeber_id===a.id?'selected':''}>${escHtml(a.vorname+' '+a.nachname)} – ${escHtml(a.ort||a.plz||'')}</option>`
+  ).join('');
+  return `
+    <div class="section-card">
+      <div class="section-title">Auftraggeber <span class="section-badge">Schritt 1</span></div>
+      <div class="form-group">
+        <label>Auftraggeber auswählen</label>
+        <select class="form-control" id="f-auftraggeber_id">
+          <option value="">– bitte auswählen –</option>
+          ${agOptions}
+        </select>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleInlineAg()" style="margin-bottom:12px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Neuen Auftraggeber anlegen
+      </button>
+      <div id="inline-ag-form" style="display:none;">
+        <div class="inline-form">
+          <div class="form-row">
+            <div class="form-group"><label>Vorname*</label><input class="form-control" id="iag-vorname"></div>
+            <div class="form-group"><label>Nachname*</label><input class="form-control" id="iag-nachname"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Straße</label><input class="form-control" id="iag-strasse"></div>
+            <div class="form-group"><label>Hausnummer</label><input class="form-control" id="iag-hausnummer"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>PLZ</label><input class="form-control" id="iag-plz"></div>
+            <div class="form-group"><label>Ort</label><input class="form-control" id="iag-ort"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Mobil</label><input class="form-control" id="iag-mobil"></div>
+            <div class="form-group"><label>E-Mail</label><input class="form-control" type="email" id="iag-email"></div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveInlineAg()">Anlegen & Auswählen</button>
+        </div>
+      </div>
+    </div>
+    ${wizardActions(false,true)}`;
+}
+function toggleInlineAg(){
+  const el=$('inline-ag-form');
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+async function saveInlineAg(){
+  const data={
+    vorname:($('iag-vorname')||{}).value||'',
+    nachname:($('iag-nachname')||{}).value||'',
+    strasse:($('iag-strasse')||{}).value||'',
+    hausnummer:($('iag-hausnummer')||{}).value||'',
+    plz:($('iag-plz')||{}).value||'',
+    ort:($('iag-ort')||{}).value||'',
+    mobil:($('iag-mobil')||{}).value||'',
+    email:($('iag-email')||{}).value||'',
+  };
+  if(!data.vorname||!data.nachname){toast('Vorname und Nachname erforderlich','error');return;}
+  setLoading(true);
+  const res=await saveAuftraggeber(data);
+  setLoading(false);
+  if(!res) return;
+  await loadAuftraggeber();
+  S.draft.auftraggeber_id=res.id;
+  toast('Auftraggeber angelegt');
+  renderForm($('app-root'));
+}
+
+// ── STEP 1: Adresse & Gutachten-Typ ──────────────────────
+function buildStep1() {
+  const d=S.draft;
+  const typen=GUTACHTEN_TYP_OPTIONS.map(o=>`
+    <div class="option-item ${d.gutachten_typ===o.val?'selected':''}" onclick="selectSingle('gutachten_typ','${o.val}')">
+      <div class="option-dot"></div><span>${escHtml(o.label)}</span>
+    </div>`).join('');
+  return `
+    <div class="section-card">
+      <div class="section-title">Bezeichnung & Adresse der Immobilie <span class="section-badge">Schritt 2</span></div>
+      <div class="form-group">
+        <label>Interne Bezeichnung*</label>
+        <input class="form-control" id="f-bezeichnung" value="${escHtml(d.bezeichnung||'')}" placeholder="z.B. Mustergasse 12, EG links">
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Straße</label><input class="form-control" id="f-strasse" value="${escHtml(d.strasse||'')}"></div>
+        <div class="form-group"><label>Hausnummer</label><input class="form-control" id="f-hausnummer" value="${escHtml(d.hausnummer||'')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Wohnungsnummer</label><input class="form-control" id="f-wohnungsnummer" value="${escHtml(d.wohnungsnummer||'')}"></div>
+        <div class="form-group"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>PLZ</label><input class="form-control" id="f-plz" value="${escHtml(d.plz||'')}"></div>
+        <div class="form-group"><label>Ort</label><input class="form-control" id="f-ort" value="${escHtml(d.ort||'')}"></div>
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Gutachten-Typ</div>
+      <div class="option-grid">${typen}</div>
+      <div class="form-group" style="margin-top:16px;">
+        <label>Vor-Ort-Besichtigung</label>
+        <div class="toggle-check" onclick="toggleBool('vor_ort_besichtigung')">
+          <div class="toggle-switch ${d.vor_ort_besichtigung?'on':''}"><div class="toggle-knob"></div></div>
+          <span>${d.vor_ort_besichtigung?'Ja – Vor-Ort-Besichtigung gewünscht':'Nein – keine Vor-Ort-Besichtigung'}</span>
+        </div>
+      </div>
+    </div>
+    ${wizardActions(true,true)}`;
+}
+
+// ── STEP 2: Art der Immobilie & Basisinfos ───────────────
+function buildStep2() {
+  const d=S.draft;
+  const artOpts=ART_IMMOBILIE_OPTIONS.map(o=>`
+    <div class="option-item ${d.art_immobilie===o?'selected':''}" onclick="selectSingle('art_immobilie','${escHtml(o).replace(/'/g,'\\\'').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}')">
+      <div class="option-dot"></div><span>${escHtml(o)}</span>
+    </div>`).join('');
+  return `
+    <div class="section-card">
+      <div class="section-title">Abschnitt 1: Art der Immobilie <span class="section-badge">Schritt 3</span></div>
+      <div class="form-group">
+        <label>Art der Immobilie</label>
+        <div class="option-grid">${artOpts}</div>
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>Kommentar / Sonstiges</label>
+        <input class="form-control" id="f-art_kommentar" value="${escHtml(d.art_kommentar||'')}" placeholder="Weitere Informationen zur Art der Immobilie">
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Basisinformationen</div>
+      <div class="form-row-3">
+        <div class="form-group"><label>Baujahr</label><input class="form-control" type="number" id="f-baujahr" value="${d.baujahr||''}" min="1800" max="2030"></div>
+        <div class="form-group"><label>Wohnfläche (m²)</label><input class="form-control" type="number" id="f-wohnflaeche" value="${d.wohnflaeche||''}" step="0.5"></div>
+        <div class="form-group"><label>Nutzungseinheiten</label><input class="form-control" type="number" id="f-nutzungseinheiten" value="${d.nutzungseinheiten||''}" min="1"></div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label>Geschossanzahl</label><input class="form-control" type="number" id="f-geschossanzahl" value="${d.geschossanzahl||''}" min="1"></div>
+        <div class="form-group"><label>Stellplätze</label><input class="form-control" type="number" id="f-stellplaetze" value="${d.stellplaetze||''}" min="0"></div>
+        <div class="form-group"><label>Nebengebäude</label><input class="form-control" id="f-nebengebaeude" value="${escHtml(d.nebengebaeude||'')}" placeholder="z.B. Garage, Schuppen"></div>
+      </div>
+    </div>
+    ${wizardActions(true,true)}`;
+}
+
+// ── STEP 3: Bauweise ─────────────────────────────────────
+function buildStep3() {
+  const d=S.draft;
+  const bauOpts=BAUWEISE_OPTIONS.map(o=>`
+    <div class="option-item ${d.bauweise===o?'selected':''}" onclick="selectSingle('bauweise','${escHtml(o)}')">
+      <div class="option-dot"></div><span>${escHtml(o)}</span>
+    </div>`).join('');
+  const baederOpts=BAEDER_OPTIONS.map(o=>`
+    <div class="option-item ${d.baeder===o?'selected':''}" onclick="selectSingle('baeder','${escHtml(o)}')">
+      <div class="option-dot"></div><span>${escHtml(o)}</span>
+    </div>`).join('');
+  const dachOpts=DACHART_OPTIONS.map(o=>`
+    <div class="option-item ${(d.dachart||[]).includes(o)?'selected':''}" onclick="toggleMulti('dachart','${escHtml(o)}')">
+      <div class="option-check"><span class="option-check-mark">✓</span></div><span>${escHtml(o)}</span>
+    </div>`).join('');
+  const vergOpts=VERGLASUNG_OPTIONS.map(o=>`
+    <div class="option-item ${d.verglasung===o?'selected':''}" onclick="selectSingle('verglasung','${escHtml(o)}')">
+      <div class="option-dot"></div><span>${escHtml(o)}</span>
+    </div>`).join('');
+  const heizOpts=HEIZUNG_OPTIONS.map(o=>`
+    <div class="option-item ${(d.heizung||[]).includes(o)?'selected':''}" onclick="toggleMulti('heizung','${escHtml(o)}')">
+      <div class="option-check"><span class="option-check-mark">✓</span></div><span>${escHtml(o)}</span>
+    </div>`).join('');
+  const kellOpts=KELLER_OPTIONS.map(o=>`
+    <div class="option-item ${d.keller===o?'selected':''}" onclick="selectSingle('keller','${escHtml(o)}')">
+      <div class="option-dot"></div><span>${escHtml(o)}</span>
+    </div>`).join('');
+
+  return `
+    <div class="section-card">
+      <div class="section-title">Abschnitt 2: Bauweise & Ausstattung <span class="section-badge">Schritt 4</span></div>
+      <div class="form-group">
+        <label>2.1 Bauweise</label>
+        <div class="option-grid">${bauOpts}</div>
+        <input class="form-control" id="f-bauweise_kommentar" style="margin-top:8px;" value="${escHtml(d.bauweise_kommentar||'')}" placeholder="Kommentar zur Bauweise">
+      </div>
+      <div class="form-group">
+        <label>2.2 Bäder</label>
+        <div class="option-grid">${baederOpts}</div>
+      </div>
+      <div class="form-group">
+        <label>2.3 Dachart (Mehrfachauswahl möglich)</label>
+        <div class="option-grid">${dachOpts}</div>
+        <input class="form-control" id="f-dachart_kommentar" style="margin-top:8px;" value="${escHtml(d.dachart_kommentar||'')}" placeholder="Kommentar zur Dachart">
+      </div>
+      <div class="form-group">
+        <label>2.4 Verglasung / Fenster</label>
+        <div class="option-grid">${vergOpts}</div>
+        <input class="form-control" id="f-fenster_kommentar" style="margin-top:8px;" value="${escHtml(d.fenster_kommentar||'')}" placeholder="Kommentar zu Fenstern">
+      </div>
+      <div class="form-group">
+        <label>2.5 Heizung (Mehrfachauswahl möglich)</label>
+        <div class="option-grid">${heizOpts}</div>
+        <input class="form-control" id="f-heizung_kommentar" style="margin-top:8px;" value="${escHtml(d.heizung_kommentar||'')}" placeholder="Kommentar zur Heizung">
+      </div>
+      <div class="form-group">
+        <label>2.6 Keller</label>
+        <div class="option-grid">${kellOpts}</div>
+        <input class="form-control" id="f-keller_kommentar" style="margin-top:8px;" value="${escHtml(d.keller_kommentar||'')}" placeholder="Kommentar zum Keller">
+      </div>
+    </div>
+    ${wizardActions(true,true)}`;
+}
+
+// ── STEP 4: Modernisierungen ─────────────────────────────
+function buildStep4() {
+  const d=S.draft;
+  const grundrissOpts=GRUNDRISS_OPTIONS.map(o=>`
+    <div class="option-item ${d.grundriss===o?'selected':''}" onclick="selectSingle('grundriss','${escHtml(o)}')">
+      <div class="option-dot"></div><span>${escHtml(o)}</span>
+    </div>`).join('');
+
+  const modTables = MOD_CATEGORIES.map(cat=>{
+    const val = d[cat.key]||{};
+    const rows=MOD_PERIODS.map(p=>`
+      <tr>
+        <td>
+          <div class="mod-period-cell ${val.period===p.key?'selected':''}" onclick="selectMod('${cat.key}','${p.key}')">
+            <div class="option-dot" style="${val.period===p.key?'border-color:var(--accent);background:var(--accent);':''}"></div>
+            <span style="font-size:13px;">${escHtml(p.label)}</span>
+          </div>
+        </td>
+        <td>
+          ${p.key!=='nicht'?`<input class="mod-anteil-input" type="number" min="0" max="100"
+            placeholder="%" value="${val.period===p.key&&val.anteil!=null?val.anteil:''}"
+            id="mod-anteil-${cat.key}-${p.key}"
+            oninput="setModAnteil('${cat.key}','${p.key}',this.value)">`:'-'}
+        </td>
+      </tr>`).join('');
+    return `
+      <div class="section-card">
+        <div class="section-title" style="font-size:14px;">${escHtml(cat.label)}</div>
+        <table class="mod-table">
+          <thead><tr><th>Zeitraum</th><th>Anteil (%)</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="section-card" style="background:rgba(20,184,166,.05);border-color:rgba(20,184,166,.2);">
+      <div class="section-title">Abschnitt 3: Modernisierungen <span class="section-badge">Schritt 5</span></div>
+      <p style="color:var(--muted);font-size:13px;">Bitte wähle für jede Kategorie den Zeitraum der letzten Maßnahme aus. Optional: Anteil der modernisierten Fläche in %.</p>
+    </div>
+    ${modTables}
+    <div class="section-card">
+      <div class="section-title">3.8 Grundrissqualität</div>
+      <div class="option-grid">${grundrissOpts}</div>
+    </div>
+    ${wizardActions(true,true)}`;
+}
+
+// ── STEP 5: Unterlagen, Stichtag, Eigentümer, Rechnung ──
+function buildStep5() {
+  const d=S.draft;
+  const ul=[
+    {key:'unterlagen_bilder',label:'Fotos / Bilder'},
+    {key:'unterlagen_grundrisse',label:'Grundrisse'},
+    {key:'unterlagen_energieausweis',label:'Energieausweis'},
+    {key:'unterlagen_lageplan',label:'Lageplan'},
+  ];
+  const ulHtml=ul.map(u=>`
+    <div class="option-item ${d[u.key]?'selected':''}" onclick="toggleBool('${u.key}')">
+      <div class="option-check"><span class="option-check-mark">✓</span></div>
+      <span>${escHtml(u.label)}</span>
+    </div>`).join('');
+
+  return `
+    <div class="section-card">
+      <div class="section-title">Abschnitt 4: Vorliegende Unterlagen <span class="section-badge">Schritt 6</span></div>
+      <div class="option-grid">${ulHtml}</div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Abschnitt 5: Bewertungsstichtag</div>
+      <div class="form-group" style="max-width:240px;">
+        <label>Stichtag</label>
+        <input class="form-control" type="date" id="f-stichtag" value="${d.stichtag||''}">
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Abschnitt 6: Eigentümer</div>
+      <div class="toggle-check" onclick="toggleBool('eigentuemer_abweichend')" style="margin-bottom:16px;">
+        <div class="toggle-switch ${d.eigentuemer_abweichend?'on':''}"><div class="toggle-knob"></div></div>
+        <span>Eigentümer weicht vom Auftraggeber ab</span>
+      </div>
+      ${d.eigentuemer_abweichend?`
+        <div class="inline-form">
+          <div class="form-group"><label>Name / Firma</label><input class="form-control" id="f-eigentuemer_name" value="${escHtml(d.eigentuemer_name||'')}"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Straße</label><input class="form-control" id="f-eigentuemer_strasse" value="${escHtml(d.eigentuemer_strasse||'')}"></div>
+            <div class="form-group"><label>Hausnummer</label><input class="form-control" id="f-eigentuemer_hausnummer" value="${escHtml(d.eigentuemer_hausnummer||'')}"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>PLZ</label><input class="form-control" id="f-eigentuemer_plz" value="${escHtml(d.eigentuemer_plz||'')}"></div>
+            <div class="form-group"><label>Ort</label><input class="form-control" id="f-eigentuemer_ort" value="${escHtml(d.eigentuemer_ort||'')}"></div>
+          </div>
+        </div>`:''}
+    </div>
+    <div class="section-card">
+      <div class="section-title">Abschnitt 7: Rechnungsempfänger</div>
+      <div class="toggle-check" onclick="toggleBool('rechnung_abweichend')" style="margin-bottom:16px;">
+        <div class="toggle-switch ${d.rechnung_abweichend?'on':''}"><div class="toggle-knob"></div></div>
+        <span>Rechnungsempfänger weicht vom Auftraggeber ab</span>
+      </div>
+      ${d.rechnung_abweichend?`
+        <div class="inline-form">
+          <div class="form-group"><label>Name / Firma</label><input class="form-control" id="f-rechnung_name" value="${escHtml(d.rechnung_name||'')}"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Straße</label><input class="form-control" id="f-rechnung_strasse" value="${escHtml(d.rechnung_strasse||'')}"></div>
+            <div class="form-group"><label>Hausnummer</label><input class="form-control" id="f-rechnung_hausnummer" value="${escHtml(d.rechnung_hausnummer||'')}"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>PLZ</label><input class="form-control" id="f-rechnung_plz" value="${escHtml(d.rechnung_plz||'')}"></div>
+            <div class="form-group"><label>Ort</label><input class="form-control" id="f-rechnung_ort" value="${escHtml(d.rechnung_ort||'')}"></div>
+          </div>
+        </div>`:''}
+    </div>
+    <div class="section-card">
+      <div class="section-title">Interne Notizen</div>
+      <div class="form-group">
+        <label>Freitext / Notizen</label>
+        <textarea class="form-control" id="f-notizen" rows="5" placeholder="Interne Anmerkungen, die nicht im BeMa-Formular erscheinen...">${escHtml(d.notizen||'')}</textarea>
+      </div>
+    </div>
+    ${wizardActions(true,true)}`;
+}
+
+// ── STEP 6: Medien ───────────────────────────────────────
+function buildStep6() {
+  const id = S.editing;
+  if(!id) {
+    return `
+      <div class="section-card">
+        <div class="section-title">Medien <span class="section-badge">Schritt 7</span></div>
+        <p style="color:var(--muted);">Bitte speichere die Immobilie zuerst, um Medien hochladen zu können.</p>
+      </div>
+      ${wizardActions(true,false,'Fertig',()=>finishForm())}`;
+  }
+  const mediaItems = S.media[id]||[];
+  const photos = mediaItems.filter(m=>m.typ==='foto');
+  const videos = mediaItems.filter(m=>m.typ==='video_url');
+
+  const photoGrid = photos.length ? photos.map(m=>`
+    <div class="media-thumb">
+      <img src="${escHtml(m.url)}" alt="${escHtml(m.dateiname)}" loading="lazy">
+      <div class="media-desc">${escHtml(m.dateiname)}</div>
+      <button class="media-thumb-del" onclick="deleteMediaItem('${m.id}')">✕</button>
+    </div>`).join('') : '';
+
+  const videoList = videos.map(m=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      <span style="font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(m.url)}</span>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="deleteMediaItem('${m.id}')">✕</button>
+    </div>`).join('');
+
+  return `
+    <div class="section-card">
+      <div class="section-title">Fotos <span class="section-badge">Schritt 7</span></div>
+      <div class="upload-area" onclick="$('photo-upload').click()">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" style="margin-bottom:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div style="color:var(--muted);font-size:13px;">Fotos auswählen oder hierher ziehen</div>
+        <input type="file" id="photo-upload" accept="image/*" multiple style="display:none;" onchange="handlePhotoUpload(this)">
+      </div>
+      ${photos.length?`<div class="media-grid" style="margin-top:16px;">${photoGrid}</div>`:''}
+    </div>
+    <div class="section-card">
+      <div class="section-title">Video-URLs</div>
+      ${videoList}
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <input class="form-control" id="video-url-input" placeholder="YouTube / Vimeo URL" style="flex:1;">
+        <button class="btn btn-ghost" onclick="addVideo()">Hinzufügen</button>
+      </div>
+    </div>
+    ${wizardActions(true,false,'Fertig',null,true)}`;
+}
+
+function wizardActions(showBack=true, showNext=true, nextLabel='Weiter', nextFn=null, isFinal=false) {
+  const finalBtn = isFinal
+    ? `<button class="btn btn-primary" onclick="finishForm()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Fertig & Speichern
+       </button>`
+    : (showNext ? `<button class="btn btn-primary" onclick="stepNext()">
+        ${escHtml(nextLabel)} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+       </button>` : '');
+  return `
+    <div class="wizard-actions">
+      ${showBack?`<button class="btn btn-ghost" onclick="stepBack()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Zurück</button>`:''}
+      <button class="btn btn-ghost" onclick="saveAndClose()">Speichern & Schließen</button>
+      <div style="flex:1;"></div>
+      ${finalBtn}
+    </div>`;
+}
+
+// ── Form event binding ───────────────────────────────────
+function bindStepEvents() {
+  // Bind all form-control inputs to S.draft
+  document.querySelectorAll('[id^="f-"]').forEach(el=>{
+    const key=el.id.replace('f-','');
+    el.addEventListener('input',()=>{ S.draft[key]=el.type==='number'?(el.value?Number(el.value):null):el.value; });
+    el.addEventListener('change',()=>{ S.draft[key]=el.type==='number'?(el.value?Number(el.value):null):el.value; });
+  });
+}
+
+function selectSingle(key,val) {
+  S.draft[key]=val;
+  renderFormStep();
+}
+function toggleMulti(key,val) {
+  if(!S.draft[key]) S.draft[key]=[];
+  const arr=S.draft[key];
+  const idx=arr.indexOf(val);
+  if(idx>=0) arr.splice(idx,1); else arr.push(val);
+  renderFormStep();
+}
+function toggleBool(key) {
+  S.draft[key]=!S.draft[key];
+  renderFormStep();
+}
+function selectMod(catKey, periodKey) {
+  if(!S.draft[catKey]) S.draft[catKey]={};
+  S.draft[catKey].period=periodKey;
+  if(periodKey==='nicht') S.draft[catKey].anteil=null;
+  renderFormStep();
+}
+function setModAnteil(catKey,periodKey,val) {
+  if(!S.draft[catKey]) S.draft[catKey]={period:periodKey};
+  S.draft[catKey].anteil=val===''?null:Number(val);
+}
+
+function collectFormInputs() {
+  document.querySelectorAll('[id^="f-"]').forEach(el=>{
+    const key=el.id.replace('f-','');
+    S.draft[key]=el.type==='number'?(el.value?Number(el.value):null):(el.type==='checkbox'?el.checked:el.value);
+  });
+}
+
+async function stepNext() {
+  collectFormInputs();
+  if(S.formStep<STEP_LABELS.length-1){
+    // Auto-save on each step advance if editing
+    if(S.editing||S.formStep>=1){
+      await autoSave();
+    }
+    S.formStep++;
+    renderForm($('app-root'));
+  }
+}
+async function stepBack() {
+  collectFormInputs();
+  if(S.formStep>0){ S.formStep--; renderForm($('app-root')); }
+  else { S.view='dashboard'; render(); }
+}
+async function saveAndClose() {
+  collectFormInputs();
+  setLoading(true);
+  const res = await saveImmobilie(S.draft);
+  setLoading(false);
+  if(!res) return;
+  if(!S.editing) S.editing=res.id;
+  toast('Gespeichert');
+  await loadImmobilien();
+  S.view='dashboard'; render();
+}
+async function autoSave() {
+  const res = await saveImmobilie(S.draft);
+  if(res && !S.editing) { S.editing=res.id; S.draft.id=res.id; }
+  await loadImmobilien();
+}
+async function finishForm() {
+  collectFormInputs();
+  setLoading(true);
+  const res = await saveImmobilie(S.draft);
+  setLoading(false);
+  if(!res) return;
+  toast('Immobilie erfolgreich gespeichert!');
+  await loadImmobilien();
+  S.view='dashboard'; S.editing=null; S.draft={}; render();
+}
+
+async function handlePhotoUpload(input) {
+  if(!S.editing){ toast('Bitte zuerst speichern','error'); return; }
+  const files=Array.from(input.files);
+  setLoading(true);
+  for(const f of files){ await uploadPhoto(f, S.editing); }
+  S.media[S.editing]=await loadMedia(S.editing);
+  setLoading(false);
+  toast(files.length+' Foto(s) hochgeladen');
+  renderFormStep();
+}
+async function addVideo(){
+  const input=$('video-url-input');
+  if(!input||!input.value.trim()){ toast('Bitte URL eingeben','error'); return; }
+  if(!S.editing){ toast('Bitte zuerst speichern','error'); return; }
+  setLoading(true);
+  await addVideoUrl(S.editing, input.value.trim());
+  S.media[S.editing]=await loadMedia(S.editing);
+  setLoading(false);
+  toast('Video-URL gespeichert');
+  renderFormStep();
+}
+async function deleteMediaItem(id){
+  const allMedia=Object.values(S.media).flat();
+  const item=allMedia.find(m=>m.id===id);
+  if(!item) return;
+  setLoading(true);
+  await deleteMedia(item);
+  if(S.editing) S.media[S.editing]=await loadMedia(S.editing);
+  setLoading(false);
+  toast('Medien gelöscht');
+  renderFormStep();
+}
+
+// ────────────────────────────────────────────────────────────
+// DETAIL VIEW
+// ────────────────────────────────────────────────────────────
+async function renderDetail(root) {
+  const r=S.immobilien.find(x=>x.id===S.detail);
+  if(!r){ S.view='dashboard'; render(); return; }
+  const ag=S.auftraggeber.find(a=>a.id===r.auftraggeber_id);
+  const media=S.media[r.id]||(await loadMedia(r.id).then(m=>{S.media[r.id]=m;return m;}));
+  const photos=media.filter(m=>m.typ==='foto');
+  const videos=media.filter(m=>m.typ==='video_url');
+
+  function field(label,val){ return `<div class="detail-field"><div class="detail-label">${escHtml(label)}</div><div class="detail-value">${escHtml(val||'–')}</div></div>`; }
+  function boolField(label,val){ return `<div class="detail-field"><div class="detail-label">${escHtml(label)}</div><div class="detail-value">${val?'☑ Ja':'☐ Nein'}</div></div>`; }
+  function arrField(label,arr){ return field(label, (arr||[]).join(', ')||'–'); }
+  function modField(label,obj){
+    if(!obj||!obj.period) return field(label,'–');
+    const p=MOD_PERIODS.find(x=>x.key===obj.period);
+    return field(label,(p?.label||obj.period)+(obj.anteil!=null?' ('+obj.anteil+'%)':''));
+  }
+
+  root.innerHTML=`
+    <div id="app-main">
+      <div class="breadcrumbs">
+        <a onclick="S.view='dashboard';render()">Dashboard</a>
+        <span>/</span> ${escHtml(r.bezeichnung||'Immobilie')}
+      </div>
+      <div class="dashboard-header">
+        <div class="dashboard-title">${escHtml(r.bezeichnung||'Immobilie')}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-ghost" onclick="exportPDF('${r.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            BeMa-Formular
+          </button>
+          <button class="btn btn-ghost" onclick="editImmobilie('${r.id}')">Bearbeiten</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${r.id}')">Löschen</button>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3>Auftraggeber</h3>
+        <div class="detail-grid">
+          ${ag?field('Name',ag.vorname+' '+ag.nachname)+field('Adresse',[ag.strasse,ag.hausnummer,ag.plz,ag.ort].filter(Boolean).join(' '))+field('Mobil',ag.mobil)+field('E-Mail',ag.email):field('Auftraggeber','–')}
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3>Adresse & Gutachten</h3>
+        <div class="detail-grid">
+          ${field('Straße & Nr',[r.strasse,r.hausnummer].filter(Boolean).join(' '))}
+          ${field('Wohnungsnummer',r.wohnungsnummer)}
+          ${field('PLZ / Ort',[r.plz,r.ort].filter(Boolean).join(' '))}
+          ${field('Gutachten-Typ',GUTACHTEN_TYP_OPTIONS.find(o=>o.val===r.gutachten_typ)?.label||r.gutachten_typ)}
+          ${boolField('Vor-Ort-Besichtigung',r.vor_ort_besichtigung)}
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3>Abschnitt 1: Art & Basisinfos</h3>
+        <div class="detail-grid">
+          ${field('Art der Immobilie',r.art_immobilie)}
+          ${field('Baujahr',r.baujahr)}
+          ${field('Wohnfläche',r.wohnflaeche?r.wohnflaeche+' m²':null)}
+          ${field('Nutzungseinheiten',r.nutzungseinheiten)}
+          ${field('Geschossanzahl',r.geschossanzahl)}
+          ${field('Stellplätze',r.stellplaetze)}
+          ${field('Nebengebäude',r.nebengebaeude)}
+          ${field('Kommentar',r.art_kommentar)}
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3>Abschnitt 2: Bauweise & Ausstattung</h3>
+        <div class="detail-grid">
+          ${field('Bauweise',r.bauweise)}
+          ${field('Bäder',r.baeder)}
+          ${arrField('Dachart',r.dachart)}
+          ${field('Verglasung',r.verglasung)}
+          ${arrField('Heizung',r.heizung)}
+          ${field('Keller',r.keller)}
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3>Abschnitt 3: Modernisierungen</h3>
+        <div class="detail-grid">
+          ${MOD_CATEGORIES.map(c=>modField(c.label,r[c.key])).join('')}
+          ${field('3.8 Grundrissqualität',r.grundriss)}
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3>Abschnitt 4–7</h3>
+        <div class="detail-grid">
+          ${boolField('Fotos vorhanden',r.unterlagen_bilder)}
+          ${boolField('Grundrisse vorhanden',r.unterlagen_grundrisse)}
+          ${boolField('Energieausweis vorhanden',r.unterlagen_energieausweis)}
+          ${boolField('Lageplan vorhanden',r.unterlagen_lageplan)}
+          ${field('Bewertungsstichtag',r.stichtag?formatDate(r.stichtag):null)}
+          ${r.eigentuemer_abweichend?field('Eigentümer',r.eigentuemer_name+', '+[r.eigentuemer_strasse,r.eigentuemer_hausnummer,r.eigentuemer_plz,r.eigentuemer_ort].filter(Boolean).join(' ')):boolField('Eigentümer abweichend',false)}
+          ${r.rechnung_abweichend?field('Rechnungsempfänger',r.rechnung_name+', '+[r.rechnung_strasse,r.rechnung_hausnummer,r.rechnung_plz,r.rechnung_ort].filter(Boolean).join(' ')):boolField('Rechnung abweichend',false)}
+        </div>
+      </div>
+
+      ${r.notizen?`<div class="detail-section"><h3>Notizen</h3><div style="background:var(--surface2);border-radius:8px;padding:16px;color:var(--text);font-size:14px;line-height:1.6;white-space:pre-wrap;">${escHtml(r.notizen)}</div></div>`:''}
+
+      ${photos.length?`
+        <div class="detail-section">
+          <h3>Fotos (${photos.length})</h3>
+          <div class="media-grid">${photos.map(m=>`<div class="media-thumb"><img src="${escHtml(m.url)}" alt="${escHtml(m.dateiname)}" loading="lazy"><div class="media-desc">${escHtml(m.dateiname)}</div></div>`).join('')}</div>
+        </div>`:''}
+      ${videos.length?`
+        <div class="detail-section">
+          <h3>Video-URLs</h3>
+          ${videos.map(m=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;"><a href="${escHtml(m.url)}" target="_blank" rel="noopener" style="color:var(--accent);">${escHtml(m.url)}</a></div>`).join('')}
+        </div>`:''}
+    </div>`;
+}
+
+// ────────────────────────────────────────────────────────────
+// PDF / PRINT EXPORT
+// ────────────────────────────────────────────────────────────
+function exportPDF(id) {
+  const r=S.immobilien.find(x=>x.id===id)||{};
+  const ag=S.auftraggeber.find(a=>a.id===r.auftraggeber_id)||{};
+  const media=S.media[id]||[];
+
+  function cb(val){ return val?'☑':'☐'; }
+  function cbItem(label,val){ return `<span style="margin-right:18px;">${val?'☑':'☐'} ${label}</span>`; }
+  function modRow(cat,obj){
+    const p=MOD_PERIODS.find(x=>obj&&x.key===obj.period);
+    return MOD_PERIODS.map(period=>`<td style="text-align:center;">${(obj&&obj.period===period.key)?'☑':'☐'}</td>`).join('');
+  }
+
+  const html=`<!DOCTYPE html>
+<html lang="de"><head><meta charset="UTF-8">
+<title>BeMa Antragsformular – ${r.bezeichnung||'Immobilie'}</title>
+<style>
+  body{font-family:Arial,sans-serif;font-size:11px;color:#000;margin:20mm 20mm 20mm 25mm;line-height:1.4;}
+  h1{font-size:16px;margin-bottom:2px;}
+  h2{font-size:13px;margin:18px 0 6px;border-bottom:2px solid #000;padding-bottom:3px;}
+  h3{font-size:11px;margin:12px 0 4px;text-decoration:underline;}
+  table{width:100%;border-collapse:collapse;margin-bottom:8px;}
+  td,th{border:1px solid #999;padding:4px 6px;font-size:10px;}
+  th{background:#eee;font-weight:bold;}
+  .no-border td{border:none;padding:2px 0;}
+  .field-row{display:flex;gap:12px;margin-bottom:6px;}
+  .field{flex:1;}
+  .field label{font-weight:bold;font-size:9px;text-transform:uppercase;display:block;margin-bottom:2px;}
+  .field .val{border-bottom:1px solid #999;min-height:16px;padding:1px 2px;}
+  .checkbox-group{display:flex;flex-wrap:wrap;gap:6px 20px;margin:4px 0;}
+  .page-break{page-break-before:always;}
+  @media print{
+    body{margin:15mm 15mm 15mm 20mm;}
+    .no-print{display:none;}
+  }
+</style>
+</head><body>
+
+<div style="text-align:center;margin-bottom:16px;">
+  <h1>Antragsformular Restnutzungsdauergutachten</h1>
+  <div style="font-size:10px;">BeMa – Bewertungs-Management</div>
+</div>
+
+<div style="display:flex;justify-content:space-between;margin-bottom:16px;">
+  <div><strong>Gutachten-Typ:</strong> ${GUTACHTEN_TYP_OPTIONS.find(o=>o.val===r.gutachten_typ)?.label||'–'}</div>
+  <div><strong>Stichtag:</strong> ${r.stichtag?formatDate(r.stichtag):'_______________'}</div>
+  <div><strong>Erstellt:</strong> ${formatDate(r.created_at)}</div>
+</div>
+
+<h2>Auftraggeber</h2>
+<div class="field-row">
+  <div class="field"><label>Vorname</label><div class="val">${ag.vorname||''}</div></div>
+  <div class="field"><label>Nachname</label><div class="val">${ag.nachname||''}</div></div>
+</div>
+<div class="field-row">
+  <div class="field"><label>Straße, Hausnummer</label><div class="val">${[ag.strasse,ag.hausnummer].filter(Boolean).join(' ')}</div></div>
+  <div class="field" style="max-width:100px;"><label>PLZ</label><div class="val">${ag.plz||''}</div></div>
+  <div class="field"><label>Ort</label><div class="val">${ag.ort||''}</div></div>
+</div>
+<div class="field-row">
+  <div class="field"><label>Mobil</label><div class="val">${ag.mobil||''}</div></div>
+  <div class="field"><label>E-Mail</label><div class="val">${ag.email||''}</div></div>
+</div>
+
+<h2>Adresse der Immobilie</h2>
+<div class="field-row">
+  <div class="field"><label>Straße</label><div class="val">${r.strasse||''}</div></div>
+  <div class="field" style="max-width:80px;"><label>Hausnummer</label><div class="val">${r.hausnummer||''}</div></div>
+  <div class="field" style="max-width:80px;"><label>Wohnungsnr.</label><div class="val">${r.wohnungsnummer||''}</div></div>
+</div>
+<div class="field-row">
+  <div class="field" style="max-width:100px;"><label>PLZ</label><div class="val">${r.plz||''}</div></div>
+  <div class="field"><label>Ort</label><div class="val">${r.ort||''}</div></div>
+</div>
+
+<h2>Abschnitt 1: Art der Immobilie</h2>
+<div class="checkbox-group">
+  ${ART_IMMOBILIE_OPTIONS.map(o=>cbItem(o,r.art_immobilie===o)).join('')}
+</div>
+${r.art_kommentar?`<div style="margin-top:4px;"><em>Kommentar:</em> ${r.art_kommentar}</div>`:''}
+<div class="field-row" style="margin-top:10px;">
+  <div class="field"><label>Baujahr</label><div class="val">${r.baujahr||''}</div></div>
+  <div class="field"><label>Wohnfläche (m²)</label><div class="val">${r.wohnflaeche||''}</div></div>
+  <div class="field"><label>Nutzungseinheiten</label><div class="val">${r.nutzungseinheiten||''}</div></div>
+  <div class="field"><label>Geschossanzahl</label><div class="val">${r.geschossanzahl||''}</div></div>
+  <div class="field"><label>Stellplätze</label><div class="val">${r.stellplaetze||''}</div></div>
+</div>
+<div class="field-row">
+  <div class="field"><label>Nebengebäude</label><div class="val">${r.nebengebaeude||''}</div></div>
+</div>
+
+<h2>Abschnitt 2: Bauweise &amp; Ausstattung</h2>
+<h3>2.1 Bauweise</h3>
+<div class="checkbox-group">${BAUWEISE_OPTIONS.map(o=>cbItem(o,r.bauweise===o)).join('')}</div>
+${r.bauweise_kommentar?`<div><em>Kommentar:</em> ${r.bauweise_kommentar}</div>`:''}
+<h3>2.2 Bäder</h3>
+<div class="checkbox-group">${BAEDER_OPTIONS.map(o=>cbItem(o,r.baeder===o)).join('')}</div>
+<h3>2.3 Dachart</h3>
+<div class="checkbox-group">${DACHART_OPTIONS.map(o=>cbItem(o,(r.dachart||[]).includes(o))).join('')}</div>
+${r.dachart_kommentar?`<div><em>Kommentar:</em> ${r.dachart_kommentar}</div>`:''}
+<h3>2.4 Verglasung</h3>
+<div class="checkbox-group">${VERGLASUNG_OPTIONS.map(o=>cbItem(o,r.verglasung===o)).join('')}</div>
+${r.fenster_kommentar?`<div><em>Kommentar:</em> ${r.fenster_kommentar}</div>`:''}
+<h3>2.5 Heizung</h3>
+<div class="checkbox-group">${HEIZUNG_OPTIONS.map(o=>cbItem(o,(r.heizung||[]).includes(o))).join('')}</div>
+${r.heizung_kommentar?`<div><em>Kommentar:</em> ${r.heizung_kommentar}</div>`:''}
+<h3>2.6 Keller</h3>
+<div class="checkbox-group">${KELLER_OPTIONS.map(o=>cbItem(o,r.keller===o)).join('')}</div>
+${r.keller_kommentar?`<div><em>Kommentar:</em> ${r.keller_kommentar}</div>`:''}
+
+<div class="page-break"></div>
+<h2>Abschnitt 3: Modernisierungen</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width:28%;">Maßnahme</th>
+      ${MOD_PERIODS.map(p=>`<th style="width:12%;text-align:center;font-size:9px;">${p.label}</th>`).join('')}
+    </tr>
+  </thead>
+  <tbody>
+    ${MOD_CATEGORIES.map(cat=>`
+      <tr>
+        <td>${cat.label}</td>
+        ${modRow(cat.key,r[cat.key])}
+      </tr>`).join('')}
+  </tbody>
+</table>
+<h3>3.8 Grundrissqualität</h3>
+<div class="checkbox-group">${GRUNDRISS_OPTIONS.map(o=>cbItem(o,r.grundriss===o)).join('')}</div>
+
+<h2>Abschnitt 4: Vorliegende Unterlagen</h2>
+<div class="checkbox-group">
+  ${cbItem('Fotos / Bilder',r.unterlagen_bilder)}
+  ${cbItem('Grundrisse',r.unterlagen_grundrisse)}
+  ${cbItem('Energieausweis',r.unterlagen_energieausweis)}
+  ${cbItem('Lageplan',r.unterlagen_lageplan)}
+</div>
+
+<h2>Abschnitt 5: Bewertungsstichtag</h2>
+<div class="field-row">
+  <div class="field" style="max-width:200px;"><label>Stichtag</label><div class="val">${r.stichtag?formatDate(r.stichtag):''}</div></div>
+</div>
+
+<h2>Abschnitt 6: Eigentümer</h2>
+${r.eigentuemer_abweichend?`
+<div class="field-row">
+  <div class="field"><label>Name / Firma</label><div class="val">${r.eigentuemer_name||''}</div></div>
+</div>
+<div class="field-row">
+  <div class="field"><label>Straße</label><div class="val">${r.eigentuemer_strasse||''}</div></div>
+  <div class="field" style="max-width:80px;"><label>Hausnummer</label><div class="val">${r.eigentuemer_hausnummer||''}</div></div>
+  <div class="field" style="max-width:100px;"><label>PLZ</label><div class="val">${r.eigentuemer_plz||''}</div></div>
+  <div class="field"><label>Ort</label><div class="val">${r.eigentuemer_ort||''}</div></div>
+</div>`:`<p>☑ Identisch mit Auftraggeber</p>`}
+
+<h2>Abschnitt 7: Rechnungsempfänger</h2>
+${r.rechnung_abweichend?`
+<div class="field-row">
+  <div class="field"><label>Name / Firma</label><div class="val">${r.rechnung_name||''}</div></div>
+</div>
+<div class="field-row">
+  <div class="field"><label>Straße</label><div class="val">${r.rechnung_strasse||''}</div></div>
+  <div class="field" style="max-width:80px;"><label>Hausnummer</label><div class="val">${r.rechnung_hausnummer||''}</div></div>
+  <div class="field" style="max-width:100px;"><label>PLZ</label><div class="val">${r.rechnung_plz||''}</div></div>
+  <div class="field"><label>Ort</label><div class="val">${r.rechnung_ort||''}</div></div>
+</div>`:`<p>☑ Identisch mit Auftraggeber</p>`}
+
+<div style="margin-top:40px;display:flex;justify-content:space-between;">
+  <div><div style="border-top:1px solid #000;width:200px;margin-top:20px;padding-top:4px;">Datum, Ort</div></div>
+  <div><div style="border-top:1px solid #000;width:200px;margin-top:20px;padding-top:4px;">Unterschrift Auftraggeber</div></div>
+</div>
+
+<button class="no-print" onclick="window.print()" style="margin-top:20px;padding:10px 20px;background:#14b8a6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;">Drucken / Als PDF speichern</button>
+</body></html>`;
+
+  const w=window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+// ────────────────────────────────────────────────────────────
+// INIT
+// ────────────────────────────────────────────────────────────
+async function loadAll() {
+  await Promise.all([loadImmobilien(), loadAuftraggeber()]);
+  // Pre-load media for all immobilien (lazy - only when needed)
+}
+
+async function init() {
+  const ok=initSupabase();
+  if(!ok){ S.view='setup'; render(); return; }
+
+  // Auth state change listener
+  sb.auth.onAuthStateChange(async(event, session)=>{
+    const wasLoggedIn=!!S.session;
+    S.session=session;
+    if(session && !wasLoggedIn){
+      await loadAll();
+      S.view='dashboard';
+    } else if(!session) {
+      S.view='login';
+      S.immobilien=[]; S.auftraggeber=[];
+    }
+    render();
+  });
+
+  // Check existing session
+  const { data: { session } } = await sb.auth.getSession();
+  S.session=session;
+  if(session){
+    await loadAll();
+    S.view='dashboard';
+  } else {
+    S.view='login';
+  }
+  render();
+}
+
+// ── Wire up logout button ──
+document.getElementById('btn-logout').addEventListener('click', doLogout);
+
+// ── Boot ──
+// Load Supabase CDN then init
+(function loadSDK(){
+  if(SUPABASE_URL==='YOUR_SUPABASE_URL'){ render(); return; }
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+  s.onload=()=>init();
+  s.onerror=()=>{ toast('Supabase SDK konnte nicht geladen werden. Bitte Internetverbindung prüfen.','error'); render(); };
+  document.head.appendChild(s);
+})();
+
+// If no Supabase needed (placeholder), just render setup screen
+if(SUPABASE_URL==='YOUR_SUPABASE_URL') render();
+
+</script>
+</body>
+</html>
