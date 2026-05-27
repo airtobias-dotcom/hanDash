@@ -218,16 +218,39 @@ CREATE POLICY "media_delete_own" ON public.immobilien_media
 --
 --   Dashboard → Storage → New bucket
 --   Name:   immobilien-media
---   Public: false  (private bucket – use signed URLs)
+--   Public: TRUE  (public bucket – required so uploaded images can be displayed)
 --
 -- Then add storage policies so authenticated users can manage
--- their own files:
---
---   Policy name: "Users manage own media"
---   Allowed operations: SELECT, INSERT, UPDATE, DELETE
---   Policy definition (using bucket):
---     (auth.uid()::text = (storage.foldername(name))[1])
---
+-- their own files.  Run these in the SQL Editor:
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('immobilien-media', 'immobilien-media', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Allow authenticated users to upload into their own folder
+CREATE POLICY "auth_upload_own" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'immobilien-media'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Allow authenticated users to read/download their own files
+CREATE POLICY "auth_select_own" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (
+    bucket_id = 'immobilien-media'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Allow authenticated users to delete their own files
+CREATE POLICY "auth_delete_own" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'immobilien-media'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
 -- Storage path convention used by this app:
 --   immobilien-media/{user_id}/{immobilie_id}/{filename}
 -- ─────────────────────────────────────────────────────────────

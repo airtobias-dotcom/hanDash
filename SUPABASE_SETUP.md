@@ -35,25 +35,22 @@ Folge diesen Schritten, um das Modul einsatzbereit zu machen.
 
 ## Schritt 4 – Storage-Bucket anlegen
 
+Der Bucket muss **öffentlich** sein, damit hochgeladene Fotos in der App angezeigt werden können.
+
+**Option A (empfohlen): Alles per SQL einrichten**
+
+Das SQL-Schema (`restnutzungsdauer-setup.sql`) enthält bereits am Ende Befehle zum Anlegen des Buckets und der Policies. Du musst also nichts manuell klicken – führe einfach das gesamte SQL aus.
+
+**Option B: Manuell im Dashboard**
+
 1. Navigiere im linken Menü zu **Storage**.
 2. Klicke auf **New bucket**.
 3. Name: `immobilien-media`
-4. **Public bucket**: deaktiviert lassen (privat).
+4. **Public bucket**: **aktivieren** (öffentlich – nötig für Bildanzeige).
 5. Klicke auf **Save**.
-6. Öffne den neu erstellten Bucket und gehe zu **Policies**.
-7. Klicke auf **New policy → For full customization**.
-8. Erstelle folgende Policy:
-   - **Policy name**: Users manage own media
-   - **Allowed operations**: SELECT, INSERT, UPDATE, DELETE
-   - **Target roles**: authenticated
-   - **USING expression**:
-     ```sql
-     (auth.uid()::text = (storage.foldername(name))[1])
-     ```
-   - **WITH CHECK expression** (für INSERT):
-     ```sql
-     (auth.uid()::text = (storage.foldername(name))[1])
-     ```
+6. Navigiere dann zu **SQL Editor** und führe nur den Storage-Policy-Block aus `restnutzungsdauer-setup.sql` aus.
+
+> **Hinweis zu E-Mail-Bestätigung:** Supabase verlangt standardmäßig eine E-Mail-Bestätigung nach der Registrierung. Für ein privates internes Tool empfehle ich, das zu deaktivieren: **Authentication → Providers → Email → Confirm email: ausschalten**.
 
 ---
 
