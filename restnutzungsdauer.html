@@ -1619,33 +1619,41 @@ async function loadAll() {
 }
 
 async function init() {
-  const ok=initSupabase();
+  const ok = initSupabase();
   if(!ok){ S.view='setup'; render(); return; }
 
-  // Auth state change listener
-  sb.auth.onAuthStateChange(async(event, session)=>{
-    const wasLoggedIn=!!S.session;
-    S.session=session;
-    if(session && !wasLoggedIn){
-      await loadAll();
-      S.view='dashboard';
-    } else if(!session) {
-      S.view='login';
-      S.immobilien=[]; S.auftraggeber=[];
-    }
-    render();
-  });
+  // 1. Get current session first, then render
+  try {
+    const { data, error } = await sb.auth.getSession();
+    if(error) throw error;
+    S.session = data.session;
+  } catch(e) {
+    console.error('getSession error:', e);
+    S.session = null;
+  }
 
-  // Check existing session
-  const { data: { session } } = await sb.auth.getSession();
-  S.session=session;
-  if(session){
-    await loadAll();
-    S.view='dashboard';
+  if(S.session) {
+    try { await loadAll(); } catch(e){ console.error('loadAll error:', e); }
+    S.view = 'dashboard';
   } else {
-    S.view='login';
+    S.view = 'login';
   }
   render();
+
+  // 2. Listen for subsequent auth changes
+  sb.auth.onAuthStateChange(async(event, session)=>{
+    if(event === 'SIGNED_IN') {
+      S.session = session;
+      try { await loadAll(); } catch(e){ console.error(e); }
+      S.view = 'dashboard';
+      render();
+    } else if(event === 'SIGNED_OUT') {
+      S.session = null;
+      S.immobilien = []; S.auftraggeber = [];
+      S.view = 'login';
+      render();
+    }
+  });
 }
 
 // ── Wire up logout button ──
