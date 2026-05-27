@@ -242,9 +242,9 @@ const HEIZUNG_OPTIONS  = ['Zentralheizung Gas','Zentralheizung Öl','Fernwärme'
 const KELLER_OPTIONS   = ['Kein Keller','Teilkeller','Vollkeller','Tiefgarage'];
 const GRUNDRISS_OPTIONS = ['Sehr gut geschnitten','Gut geschnitten','Normal geschnitten','Ungünstig geschnitten','Sehr ungünstig geschnitten'];
 const GUTACHTEN_TYP_OPTIONS = [
-  { val:'ETW_270',     label:'ETW – Eigentumswohnung (270 €)' },
-  { val:'MFH_EFH_470', label:'MFH / EFH (470 €)' },
-  { val:'VOR_ORT',     label:'Vor-Ort-Besichtigung (Preis auf Anfrage)' },
+  { val:'ETW_270',     label:'ETW – Eigentumswohnung' },
+  { val:'MFH_EFH_470', label:'MFH / EFH' },
+  { val:'VOR_ORT',     label:'Vor-Ort-Besichtigung' },
 ];
 const MOD_CATEGORIES = [
   { key:'mod_dach',           label:'3.1 Dacherneuerung inkl. Verbesserung der Wärmedämmung' },
@@ -358,20 +358,26 @@ async function loadMedia(immobilie_id) {
   return data||[];
 }
 async function saveImmobilie(draft) {
-  if(!sb||!S.session) return null;
+  if(!sb||!S.session){ toast('Keine Verbindung / nicht angemeldet','error'); return null; }
   const record = { ...draft, user_id: S.session.user.id };
   delete record.id;
-  let result;
-  if(S.editing) {
-    const { data, error } = await sb.from('immobilien').update(record).eq('id',S.editing).select().single();
-    if(error){ toast('Speichern fehlgeschlagen: '+error.message,'error'); return null; }
-    result = data;
-  } else {
-    const { data, error } = await sb.from('immobilien').insert(record).select().single();
-    if(error){ toast('Speichern fehlgeschlagen: '+error.message,'error'); return null; }
-    result = data;
+  try {
+    let result;
+    if(S.editing) {
+      const { data, error } = await sb.from('immobilien').update(record).eq('id',S.editing).select().single();
+      if(error){ console.error('update failed', error, record); toast('Speichern fehlgeschlagen: '+error.message,'error'); return null; }
+      result = data;
+    } else {
+      const { data, error } = await sb.from('immobilien').insert(record).select().single();
+      if(error){ console.error('insert failed', error, record); toast('Speichern fehlgeschlagen: '+error.message,'error'); return null; }
+      result = data;
+    }
+    return result;
+  } catch(e) {
+    console.error('saveImmobilie exception', e, record);
+    toast('Unerwarteter Fehler: '+(e.message||e),'error');
+    return null;
   }
-  return result;
 }
 async function deleteImmobilie(id) {
   const { error } = await sb.from('immobilien').delete().eq('id',id);
@@ -1233,7 +1239,8 @@ async function stepNext() {
   if(S.formStep<STEP_LABELS.length-1){
     // Auto-save on each step advance if editing
     if(S.editing||S.formStep>=1){
-      await autoSave();
+      setLoading(true);
+      try { await autoSave(); } finally { setLoading(false); }
     }
     S.formStep++;
     renderForm($('app-root'));
@@ -1247,8 +1254,8 @@ async function stepBack() {
 async function saveAndClose() {
   collectFormInputs();
   setLoading(true);
-  const res = await saveImmobilie(S.draft);
-  setLoading(false);
+  let res;
+  try { res = await saveImmobilie(S.draft); } finally { setLoading(false); }
   if(!res) return;
   if(!S.editing) S.editing=res.id;
   toast('Gespeichert');
@@ -1263,8 +1270,8 @@ async function autoSave() {
 async function finishForm() {
   collectFormInputs();
   setLoading(true);
-  const res = await saveImmobilie(S.draft);
-  setLoading(false);
+  let res;
+  try { res = await saveImmobilie(S.draft); } finally { setLoading(false); }
   if(!res) return;
   toast('Immobilie erfolgreich gespeichert!');
   await loadImmobilien();
