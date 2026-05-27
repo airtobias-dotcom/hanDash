@@ -1652,18 +1652,37 @@ async function init() {
 document.getElementById('btn-logout').addEventListener('click', doLogout);
 
 // ── Boot ──
-// Load Supabase CDN then init
 (function loadSDK(){
   if(SUPABASE_URL==='YOUR_SUPABASE_URL'){ render(); return; }
-  const s=document.createElement('script');
-  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-  s.onload=()=>init();
-  s.onerror=()=>{ toast('Supabase SDK konnte nicht geladen werden. Bitte Internetverbindung prüfen.','error'); render(); };
-  document.head.appendChild(s);
-})();
 
-// If no Supabase needed (placeholder), just render setup screen
-if(SUPABASE_URL==='YOUR_SUPABASE_URL') render();
+  // Show loading indicator immediately while SDK loads
+  $('app-root').innerHTML = `<div id="app-main" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;gap:16px;">
+    <div class="loader" style="width:32px;height:32px;border-width:3px;"></div>
+    <p style="color:var(--muted);font-size:13px;">Verbinde mit Supabase…</p>
+  </div>`;
+
+  function tryLoad(src, fallback) {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => init();
+    s.onerror = () => {
+      if(fallback) { tryLoad(fallback, null); return; }
+      $('app-root').innerHTML = `<div id="app-main" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;gap:12px;text-align:center;padding:40px;">
+        <div style="font-size:32px;">⚠️</div>
+        <p style="font-weight:700;color:var(--text)">Supabase SDK konnte nicht geladen werden</p>
+        <p style="color:var(--muted);font-size:13px;max-width:400px;">Prüfe die Internetverbindung des Servers und ob jsdelivr.net oder unpkg.com erreichbar ist.</p>
+        <button class="btn btn-primary" onclick="location.reload()">Neu laden</button>
+      </div>`;
+    };
+    document.head.appendChild(s);
+  }
+
+  // Try jsdelivr first, fall back to unpkg
+  tryLoad(
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  );
+})();
 
 </script>
 </body>
