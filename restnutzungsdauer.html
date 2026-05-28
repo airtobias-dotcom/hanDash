@@ -26,6 +26,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;ba
 .hdr-title{font-size:14px;font-weight:700;color:var(--accent);}
 .hdr-spacer{flex:1;}
 .hdr-email{font-size:12px;color:var(--muted);}
+.admin-badge{display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:.3px;}
+.owner-email{font-size:11px;color:var(--muted);display:block;margin-top:2px;}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;}
 .btn-sm{padding:5px 12px;font-size:12px;}
 .btn-primary{background:var(--accent);color:#fff;box-shadow:0 1px 2px rgba(13,148,136,.3);}
@@ -288,6 +290,8 @@ const S = {
   draft: {},
   loading: false,
   searchQ: '',
+  isAdmin: false,
+  profilesMap: {},    // { [user_id]: email }
 };
 
 // ────────────────────────────────────────────────────────────
@@ -451,7 +455,7 @@ function render() {
   const emailEl = $('hdr-email');
   const logoutBtn = $('btn-logout');
   if(S.session){
-    emailEl.textContent = S.session.user.email;
+    emailEl.innerHTML = (S.isAdmin ? '<span class="admin-badge">&#9733; Admin</span> ' : '') + escHtml(S.session.user.email);
     logoutBtn.style.display='inline-flex';
   } else {
     emailEl.textContent='';
@@ -576,9 +580,12 @@ function renderDashboard(root) {
     return [r.bezeichnung,r.strasse,r.ort,r.art_immobilie].some(v=>(v||'').toLowerCase().includes(q));
   });
 
+  const colCount = S.isAdmin ? 9 : 8;
   const rows = filtered.length ? filtered.map(r=>{
     const ag = S.auftraggeber.find(a=>a.id===r.auftraggeber_id);
     const pct = computeCompletion(r);
+    const ownerEmail = S.isAdmin ? (S.profilesMap[r.user_id] || r.user_id.slice(0,8)+'…') : null;
+    const ownerCell = S.isAdmin ? `<td><span class="owner-email">${escHtml(ownerEmail)}</span></td>` : '';
     return `<tr>
       <td><strong>${escHtml(r.bezeichnung||'–')}</strong></td>
       <td>${escHtml([r.strasse,r.hausnummer,r.ort].filter(Boolean).join(' '))}</td>
@@ -587,6 +594,7 @@ function renderDashboard(root) {
       <td>${ag?escHtml(ag.vorname+' '+ag.nachname):'–'}</td>
       <td>${completionBadge(pct)}</td>
       <td>${formatDate(r.created_at)}</td>
+      ${ownerCell}
       <td style="white-space:nowrap;">
         <button class="btn btn-ghost btn-sm btn-icon" title="Ansehen" onclick="viewDetail('${r.id}')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -599,8 +607,9 @@ function renderDashboard(root) {
         </button>
       </td>
     </tr>`;
-  }).join('') : `<tr class="empty-row"><td colspan="8">Keine Immobilien vorhanden. Lege jetzt eine neue an!</td></tr>`;
+  }).join('') : `<tr class="empty-row"><td colspan="${colCount}">Keine Immobilien vorhanden. Lege jetzt eine neue an!</td></tr>`;
 
+  const ownerHeader = S.isAdmin ? '<th>Eigentümer</th>' : '';
   root.innerHTML = `
     <div id="app-main">
       <div class="dashboard-header">
@@ -625,7 +634,7 @@ function renderDashboard(root) {
           <thead><tr>
             <th>Bezeichnung</th><th>Adresse</th><th>Art</th>
             <th>Baujahr</th><th>Auftraggeber</th><th>Vollständigkeit</th>
-            <th>Erstellt</th><th>Aktionen</th>
+            <th>Erstellt</th>${ownerHeader}<th>Aktionen</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -1622,9 +1631,20 @@ ${r.rechnung_abweichend?`
 // ────────────────────────────────────────────────────────────
 // INIT
 // ────────────────────────────────────────────────────────────
+async function loadProfiles() {
+  if(!sb||!S.session||!S.isAdmin) return;
+  const { data, error } = await sb.from('profiles').select('id,email');
+  if(error){ console.warn('profiles load error', error); return; }
+  S.profilesMap = Object.fromEntries((data||[]).map(p=>[p.id, p.email]));
+}
+
 async function loadAll() {
   await Promise.all([loadImmobilien(), loadAuftraggeber()]);
-  // Pre-load media for all immobilien (lazy - only when needed)
+  await loadProfiles();
+}
+
+function detectAdmin(session) {
+  S.isAdmin = !!(session?.user?.app_metadata?.role === 'admin');
 }
 
 async function init() {
@@ -1636,6 +1656,7 @@ async function init() {
     const { data, error } = await sb.auth.getSession();
     if(error) throw error;
     S.session = data.session;
+    detectAdmin(data.session);
   } catch(e) {
     console.error('getSession error:', e);
     S.session = null;
@@ -1653,11 +1674,14 @@ async function init() {
   sb.auth.onAuthStateChange(async(event, session)=>{
     if(event === 'SIGNED_IN') {
       S.session = session;
+      detectAdmin(session);
       try { await loadAll(); } catch(e){ console.error(e); }
       S.view = 'dashboard';
       render();
     } else if(event === 'SIGNED_OUT') {
       S.session = null;
+      S.isAdmin = false;
+      S.profilesMap = {};
       S.immobilien = []; S.auftraggeber = [];
       S.view = 'login';
       render();
