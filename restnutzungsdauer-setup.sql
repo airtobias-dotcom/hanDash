@@ -40,7 +40,7 @@ CREATE TRIGGER auftraggeber_updated_at
 
 -- ─────────────────────────────────────────────────────────────
 -- 2. immobilien – Property / real-estate records
---    Mirrors every section of the BeMa Antragsformular
+--    Mirrors every section of the Antragsformular
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.immobilien (
   id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),

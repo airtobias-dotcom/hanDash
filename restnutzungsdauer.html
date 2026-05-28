@@ -239,17 +239,17 @@ const ART_IMMOBILIE_OPTIONS = [
   'Gewerbeobjekt',
   'Sonstiges',
 ];
-const BAUWEISE_OPTIONS = ['Massivbau','Holzständerbauweise','Fertighaus','Fachwerkbau','Mischbauweise','Sonstiges'];
-const BAEDER_OPTIONS   = ['Einfach','Standard','Gehoben','Luxus'];
-const DACHART_OPTIONS  = ['Flachdach','Satteldach','Walmdach','Mansarddach','Pultdach','Sheddach','Sonstiges'];
-const VERGLASUNG_OPTIONS = ['Einfachverglasung','2-fach Verglasung','3-fach Verglasung','Sonstiges'];
-const HEIZUNG_OPTIONS  = ['Zentralheizung Gas','Zentralheizung Öl','Fernwärme','Wärmepumpe','Elektroheizung','Fußbodenheizung','Kachelofen/Kamin','Pelletheizung','Sonstiges'];
-const KELLER_OPTIONS   = ['Kein Keller','Teilkeller','Vollkeller','Tiefgarage'];
-const GRUNDRISS_OPTIONS = ['Sehr gut geschnitten','Gut geschnitten','Normal geschnitten','Ungünstig geschnitten','Sehr ungünstig geschnitten'];
+const BAUWEISE_OPTIONS = ['Massivbauweise','Fachwerkhaus','Fertighaus','Holzhaus'];
+const BAEDER_OPTIONS   = ['Überwiegend mit Fenster','Überwiegend innenliegend'];
+const DACHART_OPTIONS  = ['Dachziegel/-steine','Metall','Bitumen','Schiefer','Reet/Dachbegrünung','Sonstige'];
+const VERGLASUNG_OPTIONS = ['Einfachverglasung','Doppeltverglasung','Dreifachverglasung'];
+const HEIZUNG_OPTIONS  = ['Gas Zentralheizung','Gas Etagenheizung','Fernwärme','Holzpellets','Solarkollektoren','Wärmepumpe','Schwerkraftheizung','Nachtspeicherheizung','Ölheizung','Sonstige'];
+const KELLER_OPTIONS   = ['Voll unterkellert','Teilweise unterkellert','Nicht unterkellert'];
+const GRUNDRISS_OPTIONS = ['keine wesentliche Änderung der Grundrissgestaltung','circa 25% zeitgemäß','circa 50% zeitgemäß','circa 75% zeitgemäß','100% zeitgemäß'];
 const GUTACHTEN_TYP_OPTIONS = [
-  { val:'ETW_270',     label:'ETW – Eigentumswohnung (270 €)' },
-  { val:'MFH_EFH_470', label:'MFH / EFH (470 €)' },
-  { val:'VOR_ORT',     label:'Vor-Ort-Besichtigung (Preis auf Anfrage)' },
+  { val:'ETW_270',     label:'ETW – Eigentumswohnung' },
+  { val:'MFH_EFH_470', label:'MFH / EFH' },
+  { val:'VOR_ORT',     label:'Vor-Ort-Besichtigung' },
 ];
 const MOD_CATEGORIES = [
   { key:'mod_dach',           label:'3.1 Dacherneuerung inkl. Verbesserung der Wärmedämmung' },
@@ -363,20 +363,26 @@ async function loadMedia(immobilie_id) {
   return data||[];
 }
 async function saveImmobilie(draft) {
-  if(!sb||!S.session) return null;
+  if(!sb||!S.session){ toast('Keine Verbindung / nicht angemeldet','error'); return null; }
   const record = { ...draft, user_id: S.session.user.id };
   delete record.id;
-  let result;
-  if(S.editing) {
-    const { data, error } = await sb.from('immobilien').update(record).eq('id',S.editing).select().single();
-    if(error){ toast('Speichern fehlgeschlagen: '+error.message,'error'); return null; }
-    result = data;
-  } else {
-    const { data, error } = await sb.from('immobilien').insert(record).select().single();
-    if(error){ toast('Speichern fehlgeschlagen: '+error.message,'error'); return null; }
-    result = data;
+  try {
+    let result;
+    if(S.editing) {
+      const { data, error } = await sb.from('immobilien').update(record).eq('id',S.editing).select().single();
+      if(error){ console.error('update failed', error, record); toast('Speichern fehlgeschlagen: '+error.message,'error'); return null; }
+      result = data;
+    } else {
+      const { data, error } = await sb.from('immobilien').insert(record).select().single();
+      if(error){ console.error('insert failed', error, record); toast('Speichern fehlgeschlagen: '+error.message,'error'); return null; }
+      result = data;
+    }
+    return result;
+  } catch(e) {
+    console.error('saveImmobilie exception', e, record);
+    toast('Unerwarteter Fehler: '+(e.message||e),'error');
+    return null;
   }
-  return result;
 }
 async function deleteImmobilie(id) {
   const { error } = await sb.from('immobilien').delete().eq('id',id);
@@ -1042,7 +1048,7 @@ function buildStep4() {
     </div>
     ${modTables}
     <div class="section-card">
-      <div class="section-title">3.8 Grundrissqualität</div>
+      <div class="section-title">3.8 Wesentliche Änderung der Grundrissgestaltung</div>
       <div class="option-grid">${grundrissOpts}</div>
     </div>
     ${wizardActions(true,true)}`;
@@ -1117,7 +1123,7 @@ function buildStep5() {
       <div class="section-title">Interne Notizen</div>
       <div class="form-group">
         <label>Freitext / Notizen</label>
-        <textarea class="form-control" id="f-notizen" rows="5" placeholder="Interne Anmerkungen, die nicht im BeMa-Formular erscheinen...">${escHtml(d.notizen||'')}</textarea>
+        <textarea class="form-control" id="f-notizen" rows="5" placeholder="Interne Anmerkungen, die nicht im Antragsformular erscheinen...">${escHtml(d.notizen||'')}</textarea>
       </div>
     </div>
     ${wizardActions(true,true)}`;
@@ -1239,7 +1245,8 @@ async function stepNext() {
   if(S.formStep<STEP_LABELS.length-1){
     // Auto-save on each step advance if editing
     if(S.editing||S.formStep>=1){
-      await autoSave();
+      setLoading(true);
+      try { await autoSave(); } finally { setLoading(false); }
     }
     S.formStep++;
     renderForm($('app-root'));
@@ -1253,8 +1260,8 @@ async function stepBack() {
 async function saveAndClose() {
   collectFormInputs();
   setLoading(true);
-  const res = await saveImmobilie(S.draft);
-  setLoading(false);
+  let res;
+  try { res = await saveImmobilie(S.draft); } finally { setLoading(false); }
   if(!res) return;
   if(!S.editing) S.editing=res.id;
   toast('Gespeichert');
@@ -1269,8 +1276,8 @@ async function autoSave() {
 async function finishForm() {
   collectFormInputs();
   setLoading(true);
-  const res = await saveImmobilie(S.draft);
-  setLoading(false);
+  let res;
+  try { res = await saveImmobilie(S.draft); } finally { setLoading(false); }
   if(!res) return;
   toast('Immobilie erfolgreich gespeichert!');
   await loadImmobilien();
@@ -1341,7 +1348,7 @@ async function renderDetail(root) {
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn btn-ghost" onclick="exportPDF('${r.id}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            BeMa-Formular
+            Antragsformular
           </button>
           <button class="btn btn-ghost" onclick="editImmobilie('${r.id}')">Bearbeiten</button>
           <button class="btn btn-danger btn-sm" onclick="confirmDelete('${r.id}')">Löschen</button>
@@ -1396,7 +1403,7 @@ async function renderDetail(root) {
         <h3>Abschnitt 3: Modernisierungen</h3>
         <div class="detail-grid">
           ${MOD_CATEGORIES.map(c=>modField(c.label,r[c.key])).join('')}
-          ${field('3.8 Grundrissqualität',r.grundriss)}
+          ${field('3.8 Grundrissgestaltung',r.grundriss)}
         </div>
       </div>
 
@@ -1439,13 +1446,16 @@ function exportPDF(id) {
   function cb(val){ return val?'☑':'☐'; }
   function cbItem(label,val){ return `<span style="margin-right:18px;">${val?'☑':'☐'} ${label}</span>`; }
   function modRow(cat,obj){
-    const p=MOD_PERIODS.find(x=>obj&&x.key===obj.period);
-    return MOD_PERIODS.map(period=>`<td style="text-align:center;">${(obj&&obj.period===period.key)?'☑':'☐'}</td>`).join('');
+    return MOD_PERIODS.map(period=>{
+      const checked = obj && obj.period===period.key;
+      const pct = (checked && obj.anteil!=null && obj.anteil!=='' && period.key!=='nicht') ? ` ${obj.anteil}%` : '';
+      return `<td style="text-align:center;white-space:nowrap;">${checked?'☑':'☐'}${pct}</td>`;
+    }).join('');
   }
 
   const html=`<!DOCTYPE html>
 <html lang="de"><head><meta charset="UTF-8">
-<title>BeMa Antragsformular – ${r.bezeichnung||'Immobilie'}</title>
+<title>Antragsformular Restnutzungsdauergutachten – ${r.bezeichnung||'Immobilie'}</title>
 <style>
   body{font-family:Arial,sans-serif;font-size:11px;color:#000;margin:20mm 20mm 20mm 25mm;line-height:1.4;}
   h1{font-size:16px;margin-bottom:2px;}
@@ -1470,7 +1480,6 @@ function exportPDF(id) {
 
 <div style="text-align:center;margin-bottom:16px;">
   <h1>Antragsformular Restnutzungsdauergutachten</h1>
-  <div style="font-size:10px;">BeMa – Bewertungs-Management</div>
 </div>
 
 <div style="display:flex;justify-content:space-between;margin-bottom:16px;">
@@ -1557,7 +1566,7 @@ ${r.keller_kommentar?`<div><em>Kommentar:</em> ${r.keller_kommentar}</div>`:''}
       </tr>`).join('')}
   </tbody>
 </table>
-<h3>3.8 Grundrissqualität</h3>
+<h3>3.8 Wesentliche Änderung der Grundrissgestaltung</h3>
 <div class="checkbox-group">${GRUNDRISS_OPTIONS.map(o=>cbItem(o,r.grundriss===o)).join('')}</div>
 
 <h2>Abschnitt 4: Vorliegende Unterlagen</h2>
