@@ -177,6 +177,22 @@ tr:hover td{background:#f8fafc;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(2px);}
 
+/* ── Freigabe: Badges & Modal ─────────── */
+.share-badge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;}
+.share-badge.mine{background:var(--accent-bg);color:var(--accent2);}
+.share-badge.tome{background:#eef2ff;color:#4338ca;}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:600;padding:16px;}
+.modal-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:100%;max-width:480px;max-height:85vh;overflow:auto;padding:24px;}
+.modal-card h3{margin:0 0 4px;font-size:18px;}
+.modal-card .modal-sub{color:var(--muted);font-size:13px;margin-bottom:18px;}
+.share-add{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px;}
+.share-add .form-group{flex:1;min-width:160px;margin:0;}
+.share-list-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-top:1px solid var(--border);flex-wrap:wrap;}
+.share-status{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:999px;margin-left:6px;}
+.share-status.aktiv{background:#dcfce7;color:#15803d;}
+.share-status.eingeladen{background:#fef3c7;color:#b45309;}
+@media (max-width:767px){ .modal-card{padding:18px;} }
+
 /* ── Breadcrumbs ─────────────────────── */
 .breadcrumbs{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:20px;}
 .breadcrumbs a{color:var(--muted);text-decoration:none;cursor:pointer;}
@@ -292,6 +308,7 @@ const S = {
   searchQ: '',
   isAdmin: false,
   profilesMap: {},    // { [user_id]: email }
+  myShares: [],       // Zeilen aus immobilien_shares (von mir geteilt + mir freigegeben)
 };
 
 // ────────────────────────────────────────────────────────────
@@ -359,6 +376,14 @@ async function loadAuftraggeber() {
   const { data, error } = await sb.from('auftraggeber').select('*').order('nachname');
   if(error){ toast('Fehler beim Laden der Auftraggeber: '+error.message,'error'); return; }
   S.auftraggeber = data||[];
+}
+async function loadShares() {
+  if(!sb||!S.session) return;
+  // Fail-soft: existiert die Tabelle noch nicht (DB-Patch noch nicht eingespielt),
+  // bleibt das Dashboard voll nutzbar – nur die Freigabe-UI ist dann inaktiv.
+  const { data, error } = await sb.from('immobilien_shares').select('*');
+  if(error){ S.myShares=[]; console.warn('loadShares:', error.message); return; }
+  S.myShares = data||[];
 }
 async function loadMedia(immobilie_id) {
   if(!sb||!S.session) return [];
@@ -587,7 +612,7 @@ function renderDashboard(root) {
     const ownerEmail = S.isAdmin ? (S.profilesMap[r.user_id] || r.user_id.slice(0,8)+'…') : null;
     const ownerCell = S.isAdmin ? `<td><span class="owner-email">${escHtml(ownerEmail)}</span></td>` : '';
     return `<tr>
-      <td><strong>${escHtml(r.bezeichnung||'–')}</strong></td>
+      <td><strong>${escHtml(r.bezeichnung||'–')}</strong>${shareBadge(r)}</td>
       <td>${escHtml([r.strasse,r.hausnummer,r.ort].filter(Boolean).join(' '))}</td>
       <td>${escHtml(r.art_immobilie||'–')}</td>
       <td>${r.baujahr||'–'}</td>
@@ -599,12 +624,15 @@ function renderDashboard(root) {
         <button class="btn btn-ghost btn-sm btn-icon" title="Ansehen" onclick="viewDetail('${r.id}')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
-        <button class="btn btn-ghost btn-sm btn-icon" title="Bearbeiten" onclick="editImmobilie('${r.id}')">
+        ${canEditRow(r)?`<button class="btn btn-ghost btn-sm btn-icon" title="Bearbeiten" onclick="editImmobilie('${r.id}')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </button>
-        <button class="btn btn-danger btn-sm btn-icon" title="Löschen" onclick="confirmDelete('${r.id}')">
+        </button>`:''}
+        ${canShareRow(r)?`<button class="btn btn-ghost btn-sm btn-icon" title="Teilen" onclick="openShare('${r.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>`:''}
+        ${canDeleteRow(r)?`<button class="btn btn-danger btn-sm btn-icon" title="Löschen" onclick="confirmDelete('${r.id}')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-        </button>
+        </button>`:''}
       </td>
     </tr>`;
   }).join('') : `<tr class="empty-row"><td colspan="${colCount}">Keine Immobilien vorhanden. Lege jetzt eine neue an!</td></tr>`;
@@ -654,8 +682,104 @@ function newImmobilie(){
 function editImmobilie(id){
   const r=S.immobilien.find(x=>x.id===id);
   if(!r) return;
+  if(!canEditRow(r)){ toast('Dieses Objekt ist nur zum Ansehen freigegeben','error'); return; }
   S.editing=id; S.formStep=0;
   S.draft={...r}; S.view='form'; render();
+}
+
+// ────────────────────────────────────────────────────────────
+// FREIGABE (Teilen-Dialog)
+// ────────────────────────────────────────────────────────────
+function closeShareModal(){ const m=document.getElementById('share-modal'); if(m) m.remove(); }
+function openShare(objId){
+  const r=S.immobilien.find(x=>x.id===objId);
+  if(!r || !canShareRow(r)) return;
+  closeShareModal();
+  const overlay=document.createElement('div');
+  overlay.id='share-modal';
+  overlay.className='modal-overlay';
+  overlay.innerHTML=`
+    <div class="modal-card">
+      <h3>Objekt teilen</h3>
+      <div class="modal-sub">${escHtml(r.bezeichnung||'Immobilie')}</div>
+      <div class="share-add">
+        <div class="form-group">
+          <label>E-Mail-Adresse</label>
+          <input class="form-control" type="email" id="share-email" placeholder="person@example.com">
+        </div>
+        <div class="form-group" style="flex:0 0 140px;">
+          <label>Rechte</label>
+          <select class="form-control" id="share-perm">
+            <option value="view">Nur ansehen</option>
+            <option value="edit">Bearbeiten</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="submitShare('${objId}')">Freigeben</button>
+      </div>
+      <div id="share-list"><p style="color:var(--muted);font-size:13px;">Lade…</p></div>
+      <div style="margin-top:18px;text-align:right;">
+        <button class="btn btn-ghost" onclick="closeShareModal()">Schließen</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) closeShareModal(); });
+  const inp=document.getElementById('share-email');
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); submitShare(objId); } });
+  inp.focus();
+  refreshShareList(objId);
+}
+async function refreshShareList(objId){
+  const box=document.getElementById('share-list');
+  if(!box) return;
+  const { data, error } = await sb.rpc('list_shares', { p_obj: objId });
+  if(error){ box.innerHTML=`<p style="color:var(--red);font-size:13px;">${escHtml(error.message)}</p>`; return; }
+  if(!data || !data.length){ box.innerHTML=`<p style="color:var(--muted);font-size:13px;">Noch mit niemandem geteilt.</p>`; return; }
+  box.innerHTML = data.map(s=>`
+    <div class="share-list-row">
+      <div style="min-width:0;flex:1;">
+        <strong style="word-break:break-all;">${escHtml(s.invited_email)}</strong>
+        <span class="share-status ${s.status}">${escHtml(s.status)}</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select class="form-control" style="width:auto;padding:5px 8px;font-size:12px;" onchange="changeShare('${s.id}','${objId}',this.value)">
+          <option value="view" ${s.permission==='view'?'selected':''}>Ansehen</option>
+          <option value="edit" ${s.permission==='edit'?'selected':''}>Bearbeiten</option>
+        </select>
+        <button class="btn btn-danger btn-sm" onclick="revokeShare('${s.id}','${objId}')">Entfernen</button>
+      </div>
+    </div>`).join('');
+}
+async function submitShare(objId){
+  const emailEl=document.getElementById('share-email');
+  const email=(emailEl?.value||'').trim();
+  const perm=document.getElementById('share-perm')?.value||'view';
+  if(!email){ toast('Bitte eine E-Mail-Adresse eingeben','error'); return; }
+  const { error } = await sb.rpc('share_immobilie', { p_obj: objId, p_email: email, p_perm: perm });
+  if(error){ toast('Freigabe fehlgeschlagen: '+error.message,'error'); return; }
+  if(emailEl) emailEl.value='';
+  toast('Freigegeben');
+  await refreshShareList(objId);
+  await loadShares(); render(); reopenShareAfterRender(objId);
+}
+async function changeShare(shareId, objId, perm){
+  const { error } = await sb.rpc('update_share', { p_id: shareId, p_perm: perm });
+  if(error){ toast('Änderung fehlgeschlagen: '+error.message,'error'); return; }
+  toast('Aktualisiert');
+  await loadShares();
+}
+async function revokeShare(shareId, objId){
+  const { error } = await sb.rpc('revoke_share', { p_id: shareId });
+  if(error){ toast('Entfernen fehlgeschlagen: '+error.message,'error'); return; }
+  toast('Freigabe entfernt');
+  await refreshShareList(objId);
+  await loadShares(); render(); reopenShareAfterRender(objId);
+}
+// render() ersetzt app-root, nicht das Modal (liegt an document.body) – aber die
+// Badges in der Liste sollen sich aktualisieren. Nach einem render() das Modal
+// erneut öffnen, damit es sichtbar oben bleibt.
+function reopenShareAfterRender(objId){
+  if(document.getElementById('share-modal')) return;
+  if(S.view==='dashboard'||S.view==='detail') openShare(objId);
 }
 function viewDetail(id){
   S.detail=id; S.view='detail'; render();
@@ -1357,14 +1481,15 @@ async function renderDetail(root) {
         <span>/</span> ${escHtml(r.bezeichnung||'Immobilie')}
       </div>
       <div class="dashboard-header">
-        <div class="dashboard-title">${escHtml(r.bezeichnung||'Immobilie')}</div>
+        <div class="dashboard-title">${escHtml(r.bezeichnung||'Immobilie')}${shareBadge(r)}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn btn-ghost" onclick="exportPDF('${r.id}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             Antragsformular
           </button>
-          <button class="btn btn-ghost" onclick="editImmobilie('${r.id}')">Bearbeiten</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${r.id}')">Löschen</button>
+          ${canEditRow(r)?`<button class="btn btn-ghost" onclick="editImmobilie('${r.id}')">Bearbeiten</button>`:''}
+          ${canShareRow(r)?`<button class="btn btn-ghost" onclick="openShare('${r.id}')">Teilen</button>`:''}
+          ${canDeleteRow(r)?`<button class="btn btn-danger btn-sm" onclick="confirmDelete('${r.id}')">Löschen</button>`:''}
         </div>
       </div>
 
@@ -1643,8 +1768,27 @@ async function loadProfiles() {
 }
 
 async function loadAll() {
-  await Promise.all([loadImmobilien(), loadAuftraggeber()]);
+  await Promise.all([loadImmobilien(), loadAuftraggeber(), loadShares()]);
   await loadProfiles();
+}
+
+// ── Freigabe-Helfer ──
+function myId(){ return S.session?.user?.id; }
+function shareInfo(r){
+  if(r.user_id === myId()) return { role:'owner' };
+  if(S.isAdmin) return { role:'admin' };
+  const s = S.myShares.find(x=>x.immobilie_id===r.id && x.shared_with_user_id===myId());
+  return { role:'shared', perm: s ? s.permission : 'view' };
+}
+function canEditRow(r){ const i=shareInfo(r); return i.role==='owner'||i.role==='admin'||(i.role==='shared'&&i.perm==='edit'); }
+function canShareRow(r){ const i=shareInfo(r); return i.role==='owner'||i.role==='admin'; }
+function canDeleteRow(r){ const i=shareInfo(r); return i.role==='owner'||i.role==='admin'; }
+function isSharedToMe(r){ return shareInfo(r).role==='shared'; }
+function isSharedByMe(r){ return r.user_id===myId() && S.myShares.some(x=>x.immobilie_id===r.id && x.shared_by===myId()); }
+function shareBadge(r){
+  if(isSharedToMe(r)) return `<span class="share-badge tome">geteilt mit mir</span>`;
+  if(isSharedByMe(r)) return `<span class="share-badge mine">geteilt</span>`;
+  return '';
 }
 
 function detectAdmin(session) {
