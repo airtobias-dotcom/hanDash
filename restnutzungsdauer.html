@@ -1673,8 +1673,13 @@ async function init() {
   // 2. Listen for subsequent auth changes
   sb.auth.onAuthStateChange(async(event, session)=>{
     if(event === 'SIGNED_IN') {
+      // Supabase feuert SIGNED_IN auch beim Tab-Fokus/Token-Refresh. Nur bei einem
+      // echten Login (vorher keine Session) die Ansicht wechseln — sonst verliert
+      // der Nutzer mitten im Formular seinen Schritt.
+      const wasLoggedOut = !S.session;
       S.session = session;
       detectAdmin(session);
+      if(!wasLoggedOut) return;
       try { await loadAll(); } catch(e){ console.error(e); }
       S.view = 'dashboard';
       render();
