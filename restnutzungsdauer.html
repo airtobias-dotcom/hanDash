@@ -1245,7 +1245,11 @@ function setModAnteil(catKey,periodKey,val) {
 function collectFormInputs() {
   document.querySelectorAll('[id^="f-"]').forEach(el=>{
     const key=el.id.replace('f-','');
-    S.draft[key]=el.type==='number'?(el.value?Number(el.value):null):(el.type==='checkbox'?el.checked:el.value);
+    if(el.type==='checkbox') S.draft[key]=el.checked;
+    else if(el.type==='number') S.draft[key]=el.value?Number(el.value):null;
+    // Leeres Datum muss als NULL raus - Postgres lehnt "" fuer DATE ab.
+    else if(el.type==='date') S.draft[key]=el.value||null;
+    else S.draft[key]=el.value;
   });
 }
 
